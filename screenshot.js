@@ -1,5 +1,14 @@
 const { _electron: electron } = require('playwright');
-const fs = require('fs');
+const { execSync } = require('child_process');
+
+function takeScreenshot(filename) {
+  try {
+    console.log(`Capturing screen to ${filename}...`);
+    execSync(`screencapture -x "${filename}"`);
+  } catch (err) {
+    console.error(`Failed to capture screen: ${err}`);
+  }
+}
 
 (async () => {
   try {
@@ -7,73 +16,81 @@ const fs = require('fs');
     const electronApp = await electron.launch({ args: ['.'] });
     const window = await electronApp.firstWindow();
     
-    console.log('Waiting for load...');
-    await window.waitForLoadState('domcontentloaded');
-    await window.waitForTimeout(2000);
+    // Fixed delay instead of waitForLoadState
+    await window.waitForTimeout(3000);
+
+    // Center window
+    await electronApp.evaluate(({ BrowserWindow }) => {
+      const win = BrowserWindow.getAllWindows()[0];
+      if (win) {
+         win.center();
+         win.focus();
+      }
+    });
+    await window.waitForTimeout(1000);
 
     console.log('1. Empty State');
-    await window.screenshot({ path: '01_mac_empty.png' });
+    takeScreenshot('01_mac_empty.png');
 
     console.log('2. Settings Menu');
     await window.click('#settings-btn');
-    await window.waitForTimeout(500);
-    await window.screenshot({ path: '02_mac_settings.png' });
+    await window.waitForTimeout(1000);
+    takeScreenshot('02_mac_settings.png');
     await window.click('#settings-close-btn');
     await window.waitForTimeout(500);
 
     console.log('3. Shortcuts Menu');
     await window.click('#shortcuts-btn');
-    await window.waitForTimeout(500);
-    await window.screenshot({ path: '03_mac_shortcuts.png' });
+    await window.waitForTimeout(1000);
+    takeScreenshot('03_mac_shortcuts.png');
     await window.click('#shortcuts-close-btn');
     await window.waitForTimeout(500);
 
     console.log('4. Dark Theme Toggle');
     await window.click('#theme-toggle-btn');
-    await window.waitForTimeout(500);
-    await window.screenshot({ path: '04_mac_dark_mode.png' });
+    await window.waitForTimeout(1000);
+    takeScreenshot('04_mac_dark_mode.png');
 
-    console.log('5. Testing Clipboard (Text & History)');
+    console.log('5. Testing Clipboard');
     await electronApp.evaluate(({ clipboard }) => {
-      clipboard.writeText('Test from Playwright Mac CI');
+      clipboard.writeText('Test from Mac CI');
     });
-    // Trigger history
     await window.click('#history-btn');
-    await window.waitForTimeout(500);
-    await window.screenshot({ path: '05_mac_history_opened.png' });
+    await window.waitForTimeout(1000);
+    takeScreenshot('05_mac_history_opened.png');
     await window.click('#history-close-btn');
     await window.waitForTimeout(500);
 
     console.log('6. License Modal');
     await window.click('#activate-btn');
-    await window.waitForTimeout(500);
-    await window.screenshot({ path: '06_mac_license.png' });
+    await window.waitForTimeout(1000);
+    takeScreenshot('06_mac_license.png');
     await window.click('#license-close-btn');
     await window.waitForTimeout(500);
 
-    console.log('7. Window Resize/Maximize');
+    console.log('7. Window Resize');
     await window.setViewportSize({ width: 800, height: 600 });
-    await window.waitForTimeout(500);
-    await window.screenshot({ path: '07_mac_resized.png' });
+    await electronApp.evaluate(({ BrowserWindow }) => {
+      const win = BrowserWindow.getAllWindows()[0];
+      if(win) win.center();
+    });
+    await window.waitForTimeout(1000);
+    takeScreenshot('07_mac_resized.png');
 
-    console.log('8. Toggle Pin Status');
+    console.log('8. Toggle Pin');
     await window.click('#pin-btn');
-    await window.waitForTimeout(500);
-    await window.screenshot({ path: '08_mac_unpinned.png' });
+    await window.waitForTimeout(1000);
+    takeScreenshot('08_mac_unpinned.png');
 
-    console.log('9. Light Theme Revert');
+    console.log('9. Light Theme');
     await window.click('#theme-toggle-btn');
-    await window.waitForTimeout(500);
-    await window.screenshot({ path: '09_mac_light_mode.png' });
+    await window.waitForTimeout(1000);
+    takeScreenshot('09_mac_light_mode.png');
 
-    console.log('10. Simulating Clipboard Image / Screenshot');
-    // Using JS evaluation to simulate the app receiving an image from clipboard
+    console.log('10. Add Image');
     await window.evaluate(() => {
-      // Hide empty state
       const empty = document.getElementById('empty-state');
       if(empty) empty.style.display = 'none';
-      
-      // Inject dummy image simulating a Mac screen capture
       const section = document.createElement('div');
       section.className = 'content-section';
       section.innerHTML = `
@@ -86,7 +103,7 @@ const fs = require('fs');
         <div class="section-body">
           <div class="media-grid single">
             <div class="media-item">
-              <img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/img/playwright-logo.svg" alt="Screenshot" style="background: #2b3137; padding: 20px;">
+              <img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/img/playwright-logo.svg" style="background: #2b3137; padding: 20px;">
             </div>
           </div>
         </div>
@@ -95,25 +112,24 @@ const fs = require('fs');
       document.getElementById('sections').setAttribute('data-count', '1');
     });
     await window.waitForTimeout(1000);
-    await window.screenshot({ path: '10_mac_image_added.png' });
+    takeScreenshot('10_mac_image_added.png');
 
-    console.log('11. Testing Quick Look Shortcut (Space)');
+    console.log('11. Quick Look');
     await window.keyboard.press('Space');
-    await window.waitForTimeout(800);
-    // Force show overlay for visual test
+    await window.waitForTimeout(1000);
     await window.evaluate(() => {
        document.getElementById('image-preview-overlay').style.display = 'flex';
        document.getElementById('image-preview-img').src = 'https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/img/playwright-logo.svg';
     });
-    await window.screenshot({ path: '11_mac_quick_look.png' });
+    takeScreenshot('11_mac_quick_look.png');
     
-    console.log('12. Testing Close Quick Look (Esc)');
+    console.log('12. Close Quick Look');
     await window.keyboard.press('Escape');
     await window.evaluate(() => {
        document.getElementById('image-preview-overlay').style.display = 'none';
     });
-    await window.waitForTimeout(500);
-    await window.screenshot({ path: '12_mac_quick_look_closed.png' });
+    await window.waitForTimeout(1000);
+    takeScreenshot('12_mac_quick_look_closed.png');
 
     await electronApp.close();
     console.log('Test completed successfully!');
