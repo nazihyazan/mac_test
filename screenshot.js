@@ -33,21 +33,21 @@ function takeScreenshot(filename) {
     takeScreenshot('01_mac_empty.png');
 
     console.log('2. Settings Menu');
-    await window.click('#settings-btn');
+    await window.click('#settings-btn', { force: true });
     await window.waitForTimeout(1000);
     takeScreenshot('02_mac_settings.png');
-    await window.click('#settings-close-btn');
+    await window.click('#settings-close-btn', { force: true });
     await window.waitForTimeout(500);
 
     console.log('3. Shortcuts Menu');
-    await window.click('#shortcuts-btn');
+    await window.click('#shortcuts-btn', { force: true });
     await window.waitForTimeout(1000);
     takeScreenshot('03_mac_shortcuts.png');
-    await window.click('#shortcuts-close-btn');
+    await window.click('#shortcuts-close-btn', { force: true });
     await window.waitForTimeout(500);
 
     console.log('4. Dark Theme Toggle');
-    await window.click('#theme-toggle-btn');
+    await window.click('#theme-toggle-btn', { force: true });
     await window.waitForTimeout(1000);
     takeScreenshot('04_mac_dark_mode.png');
 
@@ -55,17 +55,17 @@ function takeScreenshot(filename) {
     await electronApp.evaluate(({ clipboard }) => {
       clipboard.writeText('Test from Mac CI');
     });
-    await window.click('#history-btn');
+    await window.click('#history-btn', { force: true });
     await window.waitForTimeout(1000);
     takeScreenshot('05_mac_history_opened.png');
-    await window.click('#history-close-btn');
+    await window.click('#history-close-btn', { force: true });
     await window.waitForTimeout(500);
 
     console.log('6. License Modal');
-    await window.click('#activate-btn');
+    await window.click('#activate-btn', { force: true });
     await window.waitForTimeout(1000);
     takeScreenshot('06_mac_license.png');
-    await window.click('#license-close-btn');
+    await window.click('#license-close-btn', { force: true });
     await window.waitForTimeout(500);
 
     console.log('7. Window Resize');
@@ -78,12 +78,12 @@ function takeScreenshot(filename) {
     takeScreenshot('07_mac_resized.png');
 
     console.log('8. Toggle Pin');
-    await window.click('#pin-btn');
+    await window.click('#pin-btn', { force: true });
     await window.waitForTimeout(1000);
     takeScreenshot('08_mac_unpinned.png');
 
     console.log('9. Light Theme');
-    await window.click('#theme-toggle-btn');
+    await window.click('#theme-toggle-btn', { force: true });
     await window.waitForTimeout(1000);
     takeScreenshot('09_mac_light_mode.png');
 
