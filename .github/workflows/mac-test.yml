@@ -5,6 +5,9 @@ on:
     branches: [ "main", "master" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   test-mac:
     runs-on: macos-latest
@@ -22,8 +25,11 @@ jobs:
       - name: Run screenshot script
         run: node screenshot.js
         
-      - name: Upload screenshots
-        uses: actions/upload-artifact@v4
-        with:
-          name: mac-screenshots
-          path: '*.png'
+      - name: Commit and Push Screenshots
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout -B screenshots
+          git add *.png
+          git commit -m "Update screenshots"
+          git push -f origin screenshots
