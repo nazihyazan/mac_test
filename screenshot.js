@@ -1,10 +1,9 @@
 const { _electron: electron } = require('playwright');
-const { execSync } = require('child_process');
 
-function takeScreenshot(filename) {
+async function takeScreenshot(window, filename) {
   try {
     console.log(`Capturing screen to ${filename}...`);
-    execSync(`screencapture -x "${filename}"`);
+    await window.screenshot({ path: filename });
   } catch (err) {
     console.error(`Failed to capture screen: ${err}`);
   }
@@ -30,26 +29,26 @@ function takeScreenshot(filename) {
     await window.waitForTimeout(1000);
 
     console.log('1. Empty State');
-    takeScreenshot('01_mac_empty.png');
+    await takeScreenshot(window, '01_mac_empty.png');
 
     console.log('2. Settings Menu');
     await window.evaluate(() => document.getElementById('settings-btn').click());
     await window.waitForTimeout(1000);
-    takeScreenshot('02_mac_settings.png');
+    await takeScreenshot(window, '02_mac_settings.png');
     await window.evaluate(() => document.getElementById('settings-close-btn').click());
     await window.waitForTimeout(500);
 
     console.log('3. Shortcuts Menu');
     await window.evaluate(() => document.getElementById('shortcuts-btn').click());
     await window.waitForTimeout(1000);
-    takeScreenshot('03_mac_shortcuts.png');
+    await takeScreenshot(window, '03_mac_shortcuts.png');
     await window.evaluate(() => document.getElementById('shortcuts-close-btn').click());
     await window.waitForTimeout(500);
 
     console.log('4. Dark Theme Toggle');
     await window.evaluate(() => document.getElementById('theme-toggle-btn').click());
     await window.waitForTimeout(1000);
-    takeScreenshot('04_mac_dark_mode.png');
+    await takeScreenshot(window, '04_mac_dark_mode.png');
 
     console.log('5. Testing Clipboard');
     await electronApp.evaluate(({ clipboard }) => {
@@ -57,14 +56,14 @@ function takeScreenshot(filename) {
     });
     await window.evaluate(() => document.getElementById('history-btn').click());
     await window.waitForTimeout(1000);
-    takeScreenshot('05_mac_history_opened.png');
+    await takeScreenshot(window, '05_mac_history_opened.png');
     await window.evaluate(() => document.getElementById('history-close-btn').click());
     await window.waitForTimeout(500);
 
     console.log('6. License Modal');
     await window.evaluate(() => document.getElementById('activate-btn').click());
     await window.waitForTimeout(1000);
-    takeScreenshot('06_mac_license.png');
+    await takeScreenshot(window, '06_mac_license.png');
     await window.evaluate(() => document.getElementById('license-close-btn').click());
     await window.waitForTimeout(500);
 
@@ -75,17 +74,17 @@ function takeScreenshot(filename) {
       if(win) win.center();
     });
     await window.waitForTimeout(1000);
-    takeScreenshot('07_mac_resized.png');
+    await takeScreenshot(window, '07_mac_resized.png');
 
     console.log('8. Toggle Pin');
     await window.evaluate(() => document.getElementById('pin-btn').click());
     await window.waitForTimeout(1000);
-    takeScreenshot('08_mac_unpinned.png');
+    await takeScreenshot(window, '08_mac_unpinned.png');
 
     console.log('9. Light Theme');
     await window.evaluate(() => document.getElementById('theme-toggle-btn').click());
     await window.waitForTimeout(1000);
-    takeScreenshot('09_mac_light_mode.png');
+    await takeScreenshot(window, '09_mac_light_mode.png');
 
     console.log('10. Add Image');
     await window.evaluate(() => {
@@ -112,7 +111,7 @@ function takeScreenshot(filename) {
       document.getElementById('sections').setAttribute('data-count', '1');
     });
     await window.waitForTimeout(1000);
-    takeScreenshot('10_mac_image_added.png');
+    await takeScreenshot(window, '10_mac_image_added.png');
 
     console.log('11. Quick Look');
     await window.keyboard.press('Space');
@@ -121,7 +120,7 @@ function takeScreenshot(filename) {
        document.getElementById('image-preview-overlay').style.display = 'flex';
        document.getElementById('image-preview-img').src = 'https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/img/playwright-logo.svg';
     });
-    takeScreenshot('11_mac_quick_look.png');
+    await takeScreenshot(window, '11_mac_quick_look.png');
     
     console.log('12. Close Quick Look');
     await window.keyboard.press('Escape');
@@ -129,7 +128,7 @@ function takeScreenshot(filename) {
        document.getElementById('image-preview-overlay').style.display = 'none';
     });
     await window.waitForTimeout(1000);
-    takeScreenshot('12_mac_quick_look_closed.png');
+    await takeScreenshot(window, '12_mac_quick_look_closed.png');
 
     await electronApp.close();
     console.log('Test completed successfully!');
