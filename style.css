@@ -170,7 +170,7 @@ button {
   display: flex;
   align-items: center;
   min-height: 42px;
-  padding: 0 0 0 12px;
+  padding: 0 0 0 76px;
   border-bottom: 1px solid var(--chrome-border-color);
   background: var(--chrome-bg);
   -webkit-app-region: drag;

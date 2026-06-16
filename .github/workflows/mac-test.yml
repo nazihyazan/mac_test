@@ -22,8 +22,8 @@ jobs:
       - name: Run screenshot script
         run: node screenshot.js
         
-      - name: Upload screenshot
+      - name: Upload screenshots
         uses: actions/upload-artifact@v4
         with:
-          name: mac-screenshot
-          path: mac-screenshot.png
+          name: mac-screenshots
+          path: '*.png'
