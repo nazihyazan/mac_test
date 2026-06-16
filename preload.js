@@ -1,0 +1,52 @@
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
+
+function subscribe(channel, callback) {
+  const listener = (_event, payload) => callback(payload);
+  ipcRenderer.on(channel, listener);
+  return () => ipcRenderer.removeListener(channel, listener);
+}
+
+contextBridge.exposeInMainWorld('floatingBoard', {
+  getPlatform: () => process.platform,
+  focus: () => ipcRenderer.send('window:focus'),
+  minimize: () => ipcRenderer.send('window:minimize'),
+  toggleMaximize: () => ipcRenderer.send('window:toggle-maximize'),
+  close: () => ipcRenderer.send('window:close'),
+  togglePin: () => ipcRenderer.send('window:toggle-pin'),
+  getWindowState: () => ipcRenderer.invoke('window:get-state'),
+  getWindowBounds: () => ipcRenderer.invoke('window:get-bounds'),
+  setWindowBounds: (bounds) => ipcRenderer.send('window:set-bounds', bounds),
+  onWindowStatus: (callback) => subscribe('window:status', callback),
+  onCopyScreenshot: (callback) => subscribe('context-menu:copy-screenshot', callback),
+  
+  onHistoryShow: (callback) => subscribe('history:show', callback),
+  onMediaAutoAdded: (callback) => subscribe('media:auto-added', callback),
+  
+  onUpdateDownloaded: (callback) => subscribe('updater:update-downloaded', callback),
+  quitAndInstallUpdate: () => ipcRenderer.invoke('updater:quit-and-install'),
+  changeTheme: (theme) => ipcRenderer.send('theme:change', theme),
+
+  saveBlob: (buffer) => ipcRenderer.invoke('media:save-blob', buffer),
+  ignoreNextClipboardImage: () => ipcRenderer.send('clipboard:ignore-next'),
+
+  loadBoard: () => ipcRenderer.invoke('board:load'),
+  saveBoard: (data) => ipcRenderer.invoke('board:save', data),
+  importMedia: (payload) => ipcRenderer.invoke('media:import', payload),
+  importMediaUrl: (payload) => ipcRenderer.invoke('media:import-url', payload),
+  isPremium: () => ipcRenderer.invoke('license:is-premium'),
+  activateLicense: (email, key) => ipcRenderer.invoke('license:activate', email, key),
+  checkDailyLimit: (kind) => ipcRenderer.invoke('license:check-daily-limit', kind),
+  getDailyUsage: () => ipcRenderer.invoke('license:get-daily-usage'),
+  openExternal: (url) => ipcRenderer.send('open-external', url),
+
+  getFilePath: (file) => {
+    try {
+      if (webUtils && typeof webUtils.getPathForFile === 'function') {
+        return webUtils.getPathForFile(file);
+      }
+      return file && typeof file.path === 'string' ? file.path : '';
+    } catch (_error) {
+      return '';
+    }
+  }
+});
