@@ -1,15 +1,12 @@
 {
   "name": "floatboard",
   "version": "1.0.14",
-  "description": "Cross-platform floating clipboard manager",
+  "description": "Mac-only floating clipboard manager",
   "main": "main.js",
   "scripts": {
     "start": "env -u ELECTRON_RUN_AS_NODE electron .",
     "dev": "env -u ELECTRON_RUN_AS_NODE electron .",
-    "build:linux": "electron-builder --linux deb rpm AppImage -c.directories.output=dist/linux",
-    "build:win": "electron-builder --win nsis -c.directories.output=dist/windows",
-    "build:mac": "electron-builder --mac zip -c.directories.output=dist/macos",
-    "build:all": "npm run build:linux && npm run build:win && npm run build:mac"
+    "build:mac": "electron-builder --mac zip -c.directories.output=dist/macos"
   },
   "keywords": [
     "clipboard",
@@ -54,35 +51,6 @@
       ],
       "category": "public.app-category.productivity",
       "artifactName": "FloatBoard-${version}-mac.${ext}"
-    },
-    "win": {
-      "target": [
-        "nsis"
-      ],
-      "artifactName": "FloatBoard.Setup.${version}.${ext}"
-    },
-    "nsis": {
-      "allowToChangeInstallationDirectory": true,
-      "oneClick": false,
-      "perMachine": false,
-      "deleteAppDataOnUninstall": true,
-      "differentialPackage": false
-    },
-    "linux": {
-      "target": [
-        "deb",
-        "rpm",
-        "AppImage",
-        "snap"
-      ],
-      "category": "Utility",
-      "maintainer": "Nazih <nazih@example.com>"
-    },
-    "appx": {
-      "applicationId": "FloatBoard",
-      "identityName": "FloatingToolsStudio.FloatBoard",
-      "publisher": "CN=A59290A1-B053-4A32-B868-B3EC2BD33ABF",
-      "publisherDisplayName": "Floating Tools Studio"
     }
   }
 }

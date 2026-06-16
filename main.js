@@ -177,7 +177,7 @@ function saveWindowStateSoon() {
 
 function sendWindowStatus() {
   if (mainWindow && !mainWindow.isDestroyed()) {
-    const isMax = process.platform === 'win32' ? (normalBounds !== null) : mainWindow.isMaximized();
+    const isMax = mainWindow.isMaximized();
     mainWindow.webContents.send('window:status', {
       pinned: mainWindow.isAlwaysOnTop(),
       maximized: isMax,
@@ -312,8 +312,8 @@ function createWindow() {
     minHeight: MIN_BOUNDS.height,
     title: APP_NAME,
     icon: getIconPath(),
-    frame: process.platform === 'darwin',
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    frame: true,
+    titleBarStyle: 'hiddenInset',
     transparent: false,
     backgroundColor: '#ffffff',
     hasShadow: true,
@@ -329,13 +329,8 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false
     },
-    ...(process.platform === 'darwin' ? {
-      vibrancy: 'under-window',
-      visualEffectState: 'active'
-    } : {}),
-    ...(process.platform === 'win32' ? {
-      // backgroundMaterial removed to keep it solid white
-    } : {})
+    vibrancy: 'under-window',
+    visualEffectState: 'active'
   });
 
   mainWindow.setMenuBarVisibility(false);
@@ -547,7 +542,7 @@ function minimizeMainWindow() {
     if (!mainWindow || mainWindow.isDestroyed()) return;
     mainWindow.minimize();
     updateTrayMenu();
-  }, process.platform === 'linux' ? 80 : 0);
+  }, 0);
 }
 
 ipcMain.on('window:focus', () => {
