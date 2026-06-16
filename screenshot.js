@@ -26,6 +26,36 @@ async function takeScreenshot(window, filename) {
          win.focus();
       }
     });
+    
+    // Inject fake macOS traffic lights for the screenshots
+    await window.evaluate(() => {
+      if (document.getElementById('fake-mac-lights')) return;
+      const lights = document.createElement('div');
+      lights.id = 'fake-mac-lights';
+      lights.style.position = 'fixed';
+      lights.style.top = '14px';
+      lights.style.left = '14px';
+      lights.style.zIndex = '999999';
+      lights.style.display = 'flex';
+      lights.style.gap = '8px';
+      
+      const createDot = (color, border) => {
+        const dot = document.createElement('div');
+        dot.style.width = '12px';
+        dot.style.height = '12px';
+        dot.style.borderRadius = '50%';
+        dot.style.backgroundColor = color;
+        dot.style.border = `1px solid ${border}`;
+        return dot;
+      };
+      
+      lights.appendChild(createDot('#ff5f56', '#e0443e'));
+      lights.appendChild(createDot('#ffbd2e', '#dea123'));
+      lights.appendChild(createDot('#27c93f', '#1aab29'));
+      
+      document.body.appendChild(lights);
+    });
+    
     await window.waitForTimeout(1000);
 
     console.log('1. Empty State');
