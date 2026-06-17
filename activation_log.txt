@@ -1,0 +1,8 @@
+Modal before: false
+Modal after: false
+Btn visible: true
+Error text: 
+              
+              Invalid License Key
+            
+Error visible: true

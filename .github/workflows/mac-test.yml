@@ -23,7 +23,7 @@ jobs:
         run: npm install
         
       - name: Run screenshot script
-        run: node screenshot.js
+        run: node screenshot.js > playwright_output.txt 2>&1
         
       - name: Commit and Push Screenshots
         run: |
