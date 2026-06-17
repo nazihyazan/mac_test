@@ -20,6 +20,14 @@ async function takeScreenshot(window, filename) {
 
     const window = await electronApp.firstWindow();
     
+    window.on('pageerror', (err) => {
+      console.error('PAGE ERROR:', err.message);
+    });
+    
+    window.on('console', msg => {
+      console.log(`BROWSER [${msg.type()}]: ${msg.text()}`);
+    });
+    
     // Wait for the app init() to complete
     await window.waitForFunction(() => window.appInitialized === true, { timeout: 10000 }).catch(() => console.log('Timeout waiting for init'));
     await window.waitForTimeout(1000);
