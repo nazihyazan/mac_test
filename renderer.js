@@ -132,7 +132,6 @@ function updateWindowStatus(status) {
     pinBtn.classList.toggle('pinned', Boolean(status.pinned));
     pinBtn.setAttribute('aria-pressed', String(Boolean(status.pinned)));
   }
-
   if (maximizeBtn) {
     maximizeBtn.classList.toggle('maximized', Boolean(status.maximized));
   }
@@ -614,7 +613,7 @@ function renderTextCard(item, section) {
       </div>
     </div>
     <div class="text-card-body">
-      <textarea class="text-card-editor" placeholder="Text">${escapeHtml(item.text || '')}</textarea>
+      <textarea class="text-card-editor" placeholder="Text">${item.text}</textarea>
     </div>
   `;
 
@@ -1387,7 +1386,7 @@ async function init() {
       try {
         const success = await api.activateLicense(email, key);
         
-        if (success === true) {
+        if (success) {
           isPremium = true;
           localStorage.setItem('floatboard-email', email);
           if (activateBtn) activateBtn.style.display = 'none';
@@ -1395,12 +1394,9 @@ async function init() {
           licenseOverlay.classList.remove('active');
           isLicenseModalOpen = false;
           showToast('Activation Successful ✓');
-          state = normalizeLoadedBoard(await api.loadBoard());
-          render();
-          updateUsageBadge();
         } else {
           if (licenseError) {
-            licenseError.textContent = typeof success === 'string' ? success : 'Invalid License Key or Fingerprint mismatch.';
+            licenseError.textContent = 'Invalid License Key or Fingerprint mismatch.';
             licenseError.style.display = 'block';
           }
         }
@@ -1423,14 +1419,10 @@ async function init() {
   const historyCloseBtn = document.getElementById('history-close-btn');
   const clearHistoryBtn = document.getElementById('clear-history-btn');
 
-  if (historyBtn) {
-    historyBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (typeof api.requestClipboardHistory === 'function') {
-        api.requestClipboardHistory();
-      } else if (typeof showHistoryDropdown === 'function') {
-        showHistoryDropdown([]);
-      }
+  if (historyBtn && historyOverlay) {
+    historyBtn.addEventListener('click', () => {
+      renderHistoryList();
+      historyOverlay.classList.add('active');
     });
   }
 
@@ -1469,13 +1461,10 @@ async function init() {
   // Snow Initialization
   initSnow();
 
-  updateUsageBadge();
-
   render();
   boardEl.focus();
   
-  // Signal to testing scripts that initialization is complete
-  window.appInitialized = true;
+  updateUsageBadge();
 }
 
 async function createCheckout(email) {
@@ -1808,8 +1797,7 @@ document.addEventListener('mousemove', (e) => {
   }
 });
 
-function showHistoryDropdown(history) {
-  const items = Array.isArray(history) ? history : [];
+api.onHistoryShow((history) => {
   let dropdown = document.getElementById('history-dropdown');
   if (!dropdown) {
     dropdown = document.createElement('div');
@@ -1825,18 +1813,17 @@ function showHistoryDropdown(history) {
   
   dropdown.innerHTML = '<h3>Clipboard History</h3>';
   
-  if (items.length === 0) {
+  if (history.length === 0) {
     dropdown.innerHTML += '<div class="history-empty">No recent clips found.</div>';
   } else {
-    items.forEach(item => {
-      const content = String(item.content || '');
+    history.forEach(item => {
       const el = document.createElement('div');
       el.className = 'history-item';
       
       const textSpan = document.createElement('span');
       textSpan.className = 'history-item-text';
-      textSpan.textContent = content.length > 50 ? content.substring(0, 50) + '...' : content;
-      textSpan.title = content;
+      textSpan.textContent = item.content.length > 50 ? item.content.substring(0, 50) + '...' : item.content;
+      textSpan.title = item.content;
       
       const copyBtn = document.createElement('button');
       copyBtn.className = 'history-copy-btn';
@@ -1845,46 +1832,30 @@ function showHistoryDropdown(history) {
       
       copyBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        navigator.clipboard.writeText(content).then(() => {
+        navigator.clipboard.writeText(item.content).then(() => {
           showToast('Copied to clipboard');
           dropdown.style.display = 'none';
         });
       });
 
-      const pasteBtn = document.createElement('button');
-      pasteBtn.className = 'history-copy-btn';
-      pasteBtn.title = 'Paste to board';
-      pasteBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>';
-      
-      pasteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        addText(content);
+      el.appendChild(textSpan);
+      el.appendChild(copyBtn);
+
+      el.addEventListener('click', () => {
+        addMediaToBoard(item.content, 'text');
         dropdown.style.display = 'none';
       });
-      
-      el.appendChild(textSpan);
-      el.appendChild(pasteBtn);
-      el.appendChild(copyBtn);
       dropdown.appendChild(el);
     });
   }
-
-  const rect = document.getElementById('history-btn').getBoundingClientRect();
-  dropdown.style.top = (rect.bottom + 10) + 'px';
-  dropdown.style.left = Math.max(10, rect.left - 100) + 'px';
+  
   dropdown.style.display = 'block';
-}
-
-api.onHistoryShow((history) => {
-  showHistoryDropdown(history);
 });
 
-// Close dropdown when clicking outside
-document.addEventListener('click', (e) => {
+document.addEventListener('click', (event) => {
   const dropdown = document.getElementById('history-dropdown');
-  const historyBtn = document.getElementById('history-btn');
   if (dropdown && dropdown.style.display === 'block') {
-    if (!dropdown.contains(e.target) && (!historyBtn || !historyBtn.contains(e.target))) {
+    if (!dropdown.contains(event.target)) {
       dropdown.style.display = 'none';
     }
   }
@@ -1903,8 +1874,50 @@ api.onMediaAutoAdded(async (item) => {
   render();
   queueSave();
 });
-// The dropdown handler for history is above. Removed the full-page overlay handler.
 
+api.onHistoryShow((clipHistory) => {
+  const historyOverlay = document.getElementById('history-overlay');
+  const listEl = document.getElementById('history-list');
+  if (!historyOverlay || !listEl) return;
+
+  historyOverlay.classList.add('active');
+  
+  if (!clipHistory || clipHistory.length === 0) {
+    listEl.innerHTML = `
+      <div class="history-empty-state">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>No clipboard history</span>
+      </div>
+    `;
+    return;
+  }
+
+  listEl.innerHTML = '';
+  for (const item of clipHistory) {
+    const itemEl = document.createElement('div');
+    itemEl.className = 'history-item';
+    const bodyContent = escapeHtml(item.content);
+    itemEl.innerHTML = `
+      <div class="history-item-icon">📝</div>
+      <div class="history-item-text">${bodyContent}</div>
+      <div class="history-item-actions">
+        <button class="history-action-btn restore" type="button" title="Paste to board">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+    itemEl.querySelector('.restore').addEventListener('click', () => {
+      addText(item.content);
+      historyOverlay.classList.remove('active');
+    });
+    listEl.appendChild(itemEl);
+  }
+});
 
 document.addEventListener('mouseup', () => {
   previewDragging = false;

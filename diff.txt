@@ -1,0 +1,47 @@
+--- /home/nazih/Downloads/FloatBoard_Backup/main.js	2026-06-14 19:26:24.000000000 +0100
++++ /home/nazih/Downloads/mac_test/main.js	2026-06-16 21:30:24.315614467 +0100
+@@ -177,7 +177,7 @@
+ 
+ function sendWindowStatus() {
+   if (mainWindow && !mainWindow.isDestroyed()) {
+-    const isMax = process.platform === 'win32' ? (normalBounds !== null) : mainWindow.isMaximized();
++    const isMax = mainWindow.isMaximized();
+     mainWindow.webContents.send('window:status', {
+       pinned: mainWindow.isAlwaysOnTop(),
+       maximized: isMax,
+@@ -312,8 +312,8 @@
+     minHeight: MIN_BOUNDS.height,
+     title: APP_NAME,
+     icon: getIconPath(),
+-    frame: process.platform === 'darwin',
+-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
++    frame: true,
++    titleBarStyle: 'hiddenInset',
+     transparent: false,
+     backgroundColor: '#ffffff',
+     hasShadow: true,
+@@ -329,13 +329,8 @@
+       nodeIntegration: false,
+       sandbox: false
+     },
+-    ...(process.platform === 'darwin' ? {
+-      vibrancy: 'under-window',
+-      visualEffectState: 'active'
+-    } : {}),
+-    ...(process.platform === 'win32' ? {
+-      // backgroundMaterial removed to keep it solid white
+-    } : {})
++    vibrancy: 'under-window',
++    visualEffectState: 'active'
+   });
+ 
+   mainWindow.setMenuBarVisibility(false);
+@@ -547,7 +542,7 @@
+     if (!mainWindow || mainWindow.isDestroyed()) return;
+     mainWindow.minimize();
+     updateTrayMenu();
+-  }, process.platform === 'linux' ? 80 : 0);
++  }, 0);
+ }
+ 
+ ipcMain.on('window:focus', () => {
