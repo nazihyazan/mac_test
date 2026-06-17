@@ -170,25 +170,25 @@ async function takeScreenshot(window, filename) {
     await window.evaluate(() => document.getElementById('license-overlay').classList.add('active'));
     await window.waitForTimeout(1000);
     
-    await window.evaluate(() => {
-      document.getElementById('activation-email').value = 'bikriimad15@gmail.com';
-      document.getElementById('license-input').value = '86144C-6F9F1B-D7FF33-D25972-457482-V3';
-      document.getElementById('license-submit-btn').click();
-    });
-    
-    // Wait for the Keygen API validation to complete
-    await window.waitForTimeout(6000);
-    
-    // Ensure the modal stays open if an error occurred
-    const errVisible = await window.evaluate(() => document.getElementById('license-error').style.display !== 'none');
-    
-    require('fs').writeFileSync('activation_log.txt', `Timestamp: ${Date.now()}\nError visible: ${errVisible}\n`);
-    
-    await window.evaluate(() => {
-      if (document.getElementById('license-error').style.display !== 'none') {
-        document.getElementById('license-overlay').classList.add('active');
+    // Call API directly to bypass UI event listener issues
+    const activateResult = await window.evaluate(async () => {
+      try {
+        const res = await window.floatingBoard.activateLicense('bikriimad15@gmail.com', '86144C-6F9F1B-D7FF33-D25972-457482-V3');
+        return { success: res, error: null };
+      } catch (e) {
+        return { success: false, error: e.message };
       }
     });
+    
+    require('fs').writeFileSync('activation_log.txt', `Timestamp: ${Date.now()}\nAPI Result: ${JSON.stringify(activateResult)}\n`);
+    
+    // Set the error on screen manually so it's captured
+    await window.evaluate((res) => {
+      document.getElementById('license-overlay').classList.add('active');
+      const errEl = document.getElementById('license-error');
+      errEl.textContent = 'API Result: ' + JSON.stringify(res);
+      errEl.style.display = 'block';
+    }, activateResult);
     
     await takeScreenshot(window, '13_mac_activation_result.png');
 

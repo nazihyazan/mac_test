@@ -1,15 +1,16 @@
 Launching Electron app...
 MAIN: checkForUpdatesAndNotify called, downloadPromise is null
-MAIN_ERR: 2026-06-17 04:58:05.615 Electron Helper[2203:10376] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-2026-06-17 04:58:05.615 Electron Helper[2203:10374] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 04:58:05.635 Electron Helper[2203:10374] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 04:58:05.636 Electron Helper[2203:10374] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-2026-06-17 04:58:05.637 Electron Helper[2203:10374] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 04:58:05.641 Electron Helper[2203:10374] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 04:58:05.643 Electron Helper[2203:10374] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 04:58:05.644 Electron Helper[2203:10374] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 04:58:05.646 Electron Helper[2203:10374] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 04:58:05.647 Electron Helper[2203:10374] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:15.845 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+2026-06-17 05:04:15.845 Electron Helper[1301:6499] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:15.856 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:15.863 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: [1303:0617/050415.866927:ERROR:command_buffer_proxy_impl.cc(131)] ContextResult::kTransientFailure: Failed to send GpuControl.CreateCommandBuffer.
+MAIN_ERR: 2026-06-17 05:04:15.936 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:15.954 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:15.956 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:15.957 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:15.959 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:15.960 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
 1. Empty State
 Capturing screen to 01_mac_empty.png...
 2. Settings Menu
@@ -29,9 +30,9 @@ Capturing screen to 08_mac_unpinned.png...
 9. Light Theme
 Capturing screen to 09_mac_light_mode.png...
 10. Add Image
-MAIN_ERR: 2026-06-17 04:58:23.808 Electron Helper[2203:10371] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 04:58:23.810 Electron Helper[2203:10371] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 04:58:23.810 Electron Helper[2203:10371] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:33.464 Electron Helper[1301:6494] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:33.464 Electron Helper[1301:6494] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:04:33.465 Electron Helper[1301:6494] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
 Capturing screen to 10_mac_image_added.png...
 11. Quick Look
 Capturing screen to 11_mac_quick_look.png...
@@ -39,6 +40,6 @@ Capturing screen to 11_mac_quick_look.png...
 Capturing screen to 12_mac_quick_look_closed.png...
 13. Test Activation
 Capturing screen to 13_mac_activation_result.png...
-MAIN_ERR: Debugger ending on ws://127.0.0.1:49186/c0e3a4ae-45f7-4ec6-b4e1-3553ce4540fb
+MAIN_ERR: Debugger ending on ws://127.0.0.1:49185/cc8f8b76-d8b7-4a0d-9427-cdfe0c8f4b10
 For help, see: https://nodejs.org/en/docs/inspector
 Test completed successfully!
