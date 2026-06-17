@@ -1417,13 +1417,11 @@ async function init() {
   const historyCloseBtn = document.getElementById('history-close-btn');
   const clearHistoryBtn = document.getElementById('clear-history-btn');
 
-  if (historyBtn && historyOverlay) {
-    historyBtn.addEventListener('click', () => {
   if (historyBtn) {
     historyBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (typeof showHistoryDropdown === 'function') {
-        showHistoryDropdown(historyItems);
+        showHistoryDropdown(typeof clipHistory !== 'undefined' ? clipHistory : []);
       }
     });
   }
