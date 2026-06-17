@@ -83,15 +83,19 @@ async function verifyWithKeygen(email, key) {
       console.log('Keygen Machine Registration Response:', JSON.stringify(activateData, null, 2));
       
       if (activateData.data && activateData.data.id) {
-        // Machine registered successfully!
         return true;
+      } else {
+        console.error('Failed to register machine:', activateData);
+        return 'Registration Failed: ' + JSON.stringify(activateData.errors || activateData);
       }
     }
     
-    return false;
+    // If we reached here, the key is invalid or an unhandled validation error occurred
+    return 'Validation Failed: ' + (data.meta.code || data.meta.detail || 'Unknown error');
+    
   } catch (error) {
     console.error('Keygen validation error:', error);
-    return false;
+    return 'Network/Exception: ' + error.message;
   }
 }
 
@@ -636,11 +640,11 @@ ipcMain.handle('license:is-premium', () => {
 });
 
 ipcMain.handle('license:activate', async (_event, email, key) => {
-  const isValid = await verifyWithKeygen(email, key);
-  if (isValid) {
+  const result = await verifyWithKeygen(email, key);
+  if (result === true) {
     return activateLicense(email, key);
   }
-  return false;
+  return result || false; // Return error string if available
 });
 
 ipcMain.handle('license:check-daily-limit', async (_event, kind) => {

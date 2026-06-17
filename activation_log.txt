@@ -1,8 +1,2 @@
-Modal before: false
-Modal after: false
-Btn visible: true
-Error text: 
-              
-              Invalid License Key
-            
+Timestamp: 1781672315509
 Error visible: true

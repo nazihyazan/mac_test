@@ -1377,7 +1377,7 @@ async function init() {
       try {
         const success = await api.activateLicense(email, key);
         
-        if (success) {
+        if (success === true) {
           isPremium = true;
           localStorage.setItem('floatboard-email', email);
           if (activateBtn) activateBtn.style.display = 'none';
@@ -1385,9 +1385,16 @@ async function init() {
           licenseOverlay.classList.remove('active');
           isLicenseModalOpen = false;
           showToast('Activation Successful ✓');
+          // Reload board content
+          if (boardEl) boardEl.innerHTML = '';
+          const sections = await api.loadData();
+          if (sections) {
+            state.sections = sections;
+            renderSections();
+          }
         } else {
           if (licenseError) {
-            licenseError.textContent = 'Invalid License Key or Fingerprint mismatch.';
+            licenseError.textContent = typeof success === 'string' ? success : 'Invalid License Key or Fingerprint mismatch.';
             licenseError.style.display = 'block';
           }
         }
