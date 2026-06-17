@@ -20,8 +20,9 @@ async function takeScreenshot(window, filename) {
 
     const window = await electronApp.firstWindow();
     
-    // Fixed delay instead of waitForLoadState
-    await window.waitForTimeout(3000);
+    // Wait for the app init() to complete
+    await window.waitForFunction(() => window.appInitialized === true, { timeout: 10000 }).catch(() => console.log('Timeout waiting for init'));
+    await window.waitForTimeout(1000);
 
     // Center window
     await electronApp.evaluate(({ BrowserWindow }) => {

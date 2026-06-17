@@ -1419,8 +1419,12 @@ async function init() {
 
   if (historyBtn && historyOverlay) {
     historyBtn.addEventListener('click', () => {
-      renderHistoryList();
-      historyOverlay.classList.add('active');
+  if (historyBtn) {
+    historyBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (typeof showHistoryDropdown === 'function') {
+        showHistoryDropdown(historyItems);
+      }
     });
   }
 
@@ -1464,7 +1468,8 @@ async function init() {
   render();
   boardEl.focus();
   
-  updateUsageBadge();
+  // Signal to testing scripts that initialization is complete
+  window.appInitialized = true;
 }
 
 async function createCheckout(email) {
@@ -1797,7 +1802,7 @@ document.addEventListener('mousemove', (e) => {
   }
 });
 
-api.onHistoryShow((history) => {
+function showHistoryDropdown(history) {
   let dropdown = document.getElementById('history-dropdown');
   if (!dropdown) {
     dropdown = document.createElement('div');
@@ -1837,6 +1842,44 @@ api.onHistoryShow((history) => {
           dropdown.style.display = 'none';
         });
       });
+
+      const pasteBtn = document.createElement('button');
+      pasteBtn.className = 'history-copy-btn';
+      pasteBtn.title = 'Paste to board';
+      pasteBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>';
+      
+      pasteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        addText(item.content);
+        dropdown.style.display = 'none';
+      });
+      
+      el.appendChild(textSpan);
+      el.appendChild(pasteBtn);
+      el.appendChild(copyBtn);
+      dropdown.appendChild(el);
+    });
+  }
+
+  const rect = document.getElementById('history-btn').getBoundingClientRect();
+  dropdown.style.top = (rect.bottom + 10) + 'px';
+  dropdown.style.left = Math.max(10, rect.left - 100) + 'px';
+  dropdown.style.display = 'block';
+}
+
+api.onHistoryShow((history) => {
+  showHistoryDropdown(history);
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const dropdown = document.getElementById('history-dropdown');
+  const historyBtn = document.getElementById('history-btn');
+  if (dropdown && dropdown.style.display === 'block') {
+    if (!dropdown.contains(e.target) && (!historyBtn || !historyBtn.contains(e.target))) {
+      dropdown.style.display = 'none';
+    }
+  }
 
       el.appendChild(textSpan);
       el.appendChild(copyBtn);
