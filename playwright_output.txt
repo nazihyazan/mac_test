@@ -1,15 +1,26 @@
 Launching Electron app...
 MAIN: checkForUpdatesAndNotify called, downloadPromise is null
-MAIN_ERR: 2026-06-17 05:06:46.506 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-2026-06-17 05:06:46.506 Electron Helper[11356:33285] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:06:46.508 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:06:46.509 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:06:46.510 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:06:46.511 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:06:46.512 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:06:46.513 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:06:46.515 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:06:46.516 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:21:46.787 Electron Helper[6096:21115] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:21:46.787 Electron Helper[6096:21118] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:21:46.791 Electron Helper[6096:21115] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:21:46.796 Electron Helper[6096:21115] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:21:46.797 Electron Helper[6096:21115] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:21:46.798 Electron Helper[6096:21115] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:21:46.799 Electron Helper[6096:21115] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:21:46.800 Electron Helper[6096:21115] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:21:46.801 Electron Helper[6096:21115] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:21:46.801 Electron Helper[6096:21115] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+BROWSER [error]: Failed to load resource: net::ERR_FILE_NOT_FOUND
+PAGE ERROR: Cannot read properties of null (reading 'addEventListener')
+BROWSER [warning]: %cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security
+  Policy set or a policy with "unsafe-eval" enabled. This exposes users of
+  this app to unnecessary security risks.
+
+For more information and help, consult
+https://electronjs.org/docs/tutorial/security.
+This warning will not show up
+once the app is packaged.
+Timeout waiting for init
 1. Empty State
 Capturing screen to 01_mac_empty.png...
 2. Settings Menu
@@ -19,6 +30,7 @@ Capturing screen to 03_mac_shortcuts.png...
 4. Dark Theme Toggle
 Capturing screen to 04_mac_dark_mode.png...
 5. Testing Clipboard
+14. Testing Ctrl+Shift+V (Dropdown should appear)
 Capturing screen to 05_mac_history_opened.png...
 6. License Modal
 Capturing screen to 06_mac_license.png...
@@ -29,12 +41,14 @@ Capturing screen to 08_mac_unpinned.png...
 9. Light Theme
 Capturing screen to 09_mac_light_mode.png...
 10. Add Image
-MAIN_ERR: 2026-06-17 05:07:05.448 Electron Helper[11356:33285] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:07:05.450 Electron Helper[11356:33285] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:07:05.451 Electron Helper[11356:33285] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:22:34.034 Electron Helper[6096:21113] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:22:34.036 Electron Helper[6096:21113] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 18:22:34.036 Electron Helper[6096:21113] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+BROWSER [error]: Failed to load resource: the server responded with a status of 404 ()
 Capturing screen to 10_mac_image_added.png...
 11. Quick Look
 Capturing screen to 11_mac_quick_look.png...
+BROWSER [error]: Failed to load resource: the server responded with a status of 404 ()
 12. Close Quick Look
 Capturing screen to 12_mac_quick_look_closed.png...
 13. Test Activation
@@ -64,7 +78,7 @@ MAIN: Keygen Validate Response: {
       "maxUses": null,
       "requireHeartbeat": false,
       "requireCheckIn": false,
-      "lastValidated": "2026-06-17T05:07:11.868Z",
+      "lastValidated": "2026-06-17T18:22:40.906Z",
       "lastCheckIn": null,
       "nextCheckIn": null,
       "lastCheckOut": null,
@@ -109,7 +123,7 @@ MAIN: Keygen Validate Response: {
       ],
       "metadata": {},
       "created": "2026-06-17T04:25:21.425Z",
-      "updated": "2026-06-17T05:00:15.251Z"
+      "updated": "2026-06-17T18:12:40.099Z"
     },
     "relationships": {
       "account": {
@@ -173,7 +187,7 @@ MAIN: Keygen Validate Response: {
           "cores": 0,
           "memory": 0,
           "disk": 0,
-          "count": 1
+          "count": 2
         }
       },
       "tokens": {
@@ -192,103 +206,16 @@ MAIN: Keygen Validate Response: {
     }
   },
   "meta": {
-    "ts": "2026-06-17T05:07:11.876Z",
-    "valid": false,
-    "detail": "fingerprint is not activated (does not match any associated machines)",
-    "code": "FINGERPRINT_SCOPE_MISMATCH",
+    "ts": "2026-06-17T18:22:40.917Z",
+    "valid": true,
+    "detail": "is valid",
+    "code": "VALID",
     "scope": {
       "fingerprint": "96070e16-818e-520c-8003-679f1e6c22d9"
     }
   }
 }
-Machine not registered. Attempting to register machine...
-MAIN: Keygen Machine Registration Response: {
-  "data": {
-    "id": "780d38f3-5108-40dd-8657-641ccb2a2b0b",
-    "type": "machines",
-    "attributes": {
-      "fingerprint": "96070e16-818e-520c-8003-679f1e6c22d9",
-      "cores": null,
-      "memory": null,
-      "disk": null,
-      "ip": null,
-      "hostname": null,
-      "platform": null,
-      "name": "sjc22-bt147-cf25a971-78bc-4fdc-95ae-15dd939aee0e-FE7539809B0E.local",
-      "requireHeartbeat": false,
-      "heartbeatStatus": "NOT_STARTED",
-      "heartbeatDuration": 600,
-      "maxProcesses": null,
-      "lastCheckOut": null,
-      "lastHeartbeat": null,
-      "nextHeartbeat": null,
-      "metadata": {},
-      "created": "2026-06-17T05:07:11.992Z",
-      "updated": "2026-06-17T05:07:11.992Z"
-    },
-    "relationships": {
-      "account": {
-        "links": {
-          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76"
-        },
-        "data": {
-          "type": "accounts",
-          "id": "dcc57dd7-bfd1-4469-a4f4-7c8545660f76"
-        }
-      },
-      "environment": {
-        "links": {
-          "related": null
-        },
-        "data": null
-      },
-      "product": {
-        "links": {
-          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/product"
-        },
-        "data": {
-          "type": "products",
-          "id": "32563378-50b5-48be-a4c2-21f11fd78bc8"
-        }
-      },
-      "group": {
-        "links": {
-          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/group"
-        },
-        "data": null
-      },
-      "license": {
-        "links": {
-          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/license"
-        },
-        "data": {
-          "type": "licenses",
-          "id": "30153821-7575-4361-b1e8-0bfbce315bf3"
-        }
-      },
-      "owner": {
-        "links": {
-          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/owner"
-        },
-        "data": null
-      },
-      "components": {
-        "links": {
-          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/components"
-        }
-      },
-      "processes": {
-        "links": {
-          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/processes"
-        }
-      }
-    },
-    "links": {
-      "self": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b"
-    }
-  }
-}
 Capturing screen to 13_mac_activation_result.png...
-MAIN_ERR: Debugger ending on ws://127.0.0.1:49186/e0ca8173-d548-4ef2-bd2b-095252b671d8
+MAIN_ERR: Debugger ending on ws://127.0.0.1:49187/48513f11-3061-481b-98f8-99bf943c1d0a
 For help, see: https://nodejs.org/en/docs/inspector
 Test completed successfully!
