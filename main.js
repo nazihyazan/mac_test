@@ -52,8 +52,8 @@ async function verifyWithKeygen(email, key) {
       return true;
     }
     
-    // If the key is valid but this specific machine hasn't been registered yet
-    if (data.meta && (data.meta.code === 'NO_MACHINES' || data.meta.code === 'NO_MACHINE')) {
+    // If the key is valid but this specific machine hasn't been registered yet (either no machines at all, or a different machine is registered)
+    if (data.meta && (data.meta.code === 'NO_MACHINES' || data.meta.code === 'NO_MACHINE' || data.meta.code === 'FINGERPRINT_SCOPE_MISMATCH' || data.meta.code === 'FINGERPRINT_RESOLUTION_FAILED')) {
       console.log('Machine not registered. Attempting to register machine...');
       
       const activateResponse = await net.fetch('https://api.keygen.sh/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines', {
