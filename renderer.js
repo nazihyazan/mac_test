@@ -1459,6 +1459,8 @@ async function init() {
   // Snow Initialization
   initSnow();
 
+  updateUsageBadge();
+
   render();
   boardEl.focus();
   
@@ -1872,50 +1874,8 @@ api.onMediaAutoAdded(async (item) => {
   render();
   queueSave();
 });
+// The dropdown handler for history is above. Removed the full-page overlay handler.
 
-api.onHistoryShow((clipHistory) => {
-  const historyOverlay = document.getElementById('history-overlay');
-  const listEl = document.getElementById('history-list');
-  if (!historyOverlay || !listEl) return;
-
-  historyOverlay.classList.add('active');
-  
-  if (!clipHistory || clipHistory.length === 0) {
-    listEl.innerHTML = `
-      <div class="history-empty-state">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <span>No clipboard history</span>
-      </div>
-    `;
-    return;
-  }
-
-  listEl.innerHTML = '';
-  for (const item of clipHistory) {
-    const itemEl = document.createElement('div');
-    itemEl.className = 'history-item';
-    const bodyContent = escapeHtml(item.content);
-    itemEl.innerHTML = `
-      <div class="history-item-icon">📝</div>
-      <div class="history-item-text">${bodyContent}</div>
-      <div class="history-item-actions">
-        <button class="history-action-btn restore" type="button" title="Paste to board">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"></path>
-            <path d="M3 3v5h5"></path>
-          </svg>
-        </button>
-      </div>
-    `;
-    itemEl.querySelector('.restore').addEventListener('click', () => {
-      addText(item.content);
-      historyOverlay.classList.remove('active');
-    });
-    listEl.appendChild(itemEl);
-  }
-});
 
 document.addEventListener('mouseup', () => {
   previewDragging = false;

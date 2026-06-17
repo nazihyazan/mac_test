@@ -1,16 +1,15 @@
 Launching Electron app...
 MAIN: checkForUpdatesAndNotify called, downloadPromise is null
-MAIN_ERR: 2026-06-17 05:04:15.845 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-2026-06-17 05:04:15.845 Electron Helper[1301:6499] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:04:15.856 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:04:15.863 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: [1303:0617/050415.866927:ERROR:command_buffer_proxy_impl.cc(131)] ContextResult::kTransientFailure: Failed to send GpuControl.CreateCommandBuffer.
-MAIN_ERR: 2026-06-17 05:04:15.936 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:04:15.954 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:04:15.956 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:04:15.957 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:04:15.959 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:04:15.960 Electron Helper[1301:6497] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:06:46.506 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+2026-06-17 05:06:46.506 Electron Helper[11356:33285] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:06:46.508 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:06:46.509 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:06:46.510 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:06:46.511 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:06:46.512 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:06:46.513 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:06:46.515 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:06:46.516 Electron Helper[11356:33288] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
 1. Empty State
 Capturing screen to 01_mac_empty.png...
 2. Settings Menu
@@ -30,16 +29,266 @@ Capturing screen to 08_mac_unpinned.png...
 9. Light Theme
 Capturing screen to 09_mac_light_mode.png...
 10. Add Image
-MAIN_ERR: 2026-06-17 05:04:33.464 Electron Helper[1301:6494] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:04:33.464 Electron Helper[1301:6494] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
-MAIN_ERR: 2026-06-17 05:04:33.465 Electron Helper[1301:6494] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:07:05.448 Electron Helper[11356:33285] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:07:05.450 Electron Helper[11356:33285] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
+MAIN_ERR: 2026-06-17 05:07:05.451 Electron Helper[11356:33285] XPC error for connection com.apple.backupd.sandbox.xpc: Connection invalid
 Capturing screen to 10_mac_image_added.png...
 11. Quick Look
 Capturing screen to 11_mac_quick_look.png...
 12. Close Quick Look
 Capturing screen to 12_mac_quick_look_closed.png...
 13. Test Activation
+MAIN: Keygen Validate Response: {
+  "data": {
+    "id": "30153821-7575-4361-b1e8-0bfbce315bf3",
+    "type": "licenses",
+    "attributes": {
+      "name": null,
+      "key": "86144C-6F9F1B-D7FF33-D25972-457482-V3",
+      "expiry": null,
+      "status": "ACTIVE",
+      "uses": 0,
+      "suspended": false,
+      "scheme": null,
+      "encrypted": false,
+      "strict": true,
+      "floating": true,
+      "protected": true,
+      "version": null,
+      "maxMachines": 2,
+      "maxProcesses": null,
+      "maxUsers": null,
+      "maxCores": null,
+      "maxMemory": null,
+      "maxDisk": null,
+      "maxUses": null,
+      "requireHeartbeat": false,
+      "requireCheckIn": false,
+      "lastValidated": "2026-06-17T05:07:11.868Z",
+      "lastCheckIn": null,
+      "nextCheckIn": null,
+      "lastCheckOut": null,
+      "permissions": [
+        "arch.read",
+        "artifact.read",
+        "channel.read",
+        "component.create",
+        "component.delete",
+        "component.read",
+        "component.update",
+        "constraint.read",
+        "engine.read",
+        "entitlement.read",
+        "group.owners.read",
+        "group.read",
+        "license.check-in",
+        "license.check-out",
+        "license.read",
+        "license.usage.increment",
+        "license.validate",
+        "machine.check-out",
+        "machine.create",
+        "machine.delete",
+        "machine.heartbeat.ping",
+        "machine.proofs.generate",
+        "machine.read",
+        "machine.update",
+        "package.read",
+        "platform.read",
+        "process.create",
+        "process.delete",
+        "process.heartbeat.ping",
+        "process.read",
+        "process.update",
+        "release.download",
+        "release.read",
+        "release.upgrade",
+        "token.read",
+        "token.regenerate",
+        "token.revoke"
+      ],
+      "metadata": {},
+      "created": "2026-06-17T04:25:21.425Z",
+      "updated": "2026-06-17T05:00:15.251Z"
+    },
+    "relationships": {
+      "account": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76"
+        },
+        "data": {
+          "type": "accounts",
+          "id": "dcc57dd7-bfd1-4469-a4f4-7c8545660f76"
+        }
+      },
+      "environment": {
+        "links": {
+          "related": null
+        },
+        "data": null
+      },
+      "product": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/licenses/30153821-7575-4361-b1e8-0bfbce315bf3/product"
+        },
+        "data": {
+          "type": "products",
+          "id": "32563378-50b5-48be-a4c2-21f11fd78bc8"
+        }
+      },
+      "policy": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/licenses/30153821-7575-4361-b1e8-0bfbce315bf3/policy"
+        },
+        "data": {
+          "type": "policies",
+          "id": "dc39fd8d-2d3f-4767-9182-eeee943f67e4"
+        }
+      },
+      "group": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/licenses/30153821-7575-4361-b1e8-0bfbce315bf3/group"
+        },
+        "data": null
+      },
+      "owner": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/licenses/30153821-7575-4361-b1e8-0bfbce315bf3/owner"
+        },
+        "data": null
+      },
+      "users": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/licenses/30153821-7575-4361-b1e8-0bfbce315bf3/users"
+        },
+        "meta": {
+          "count": 0
+        }
+      },
+      "machines": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/licenses/30153821-7575-4361-b1e8-0bfbce315bf3/machines"
+        },
+        "meta": {
+          "cores": 0,
+          "memory": 0,
+          "disk": 0,
+          "count": 1
+        }
+      },
+      "tokens": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/licenses/30153821-7575-4361-b1e8-0bfbce315bf3/tokens"
+        }
+      },
+      "entitlements": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/licenses/30153821-7575-4361-b1e8-0bfbce315bf3/entitlements"
+        }
+      }
+    },
+    "links": {
+      "self": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/licenses/30153821-7575-4361-b1e8-0bfbce315bf3"
+    }
+  },
+  "meta": {
+    "ts": "2026-06-17T05:07:11.876Z",
+    "valid": false,
+    "detail": "fingerprint is not activated (does not match any associated machines)",
+    "code": "FINGERPRINT_SCOPE_MISMATCH",
+    "scope": {
+      "fingerprint": "96070e16-818e-520c-8003-679f1e6c22d9"
+    }
+  }
+}
+Machine not registered. Attempting to register machine...
+MAIN: Keygen Machine Registration Response: {
+  "data": {
+    "id": "780d38f3-5108-40dd-8657-641ccb2a2b0b",
+    "type": "machines",
+    "attributes": {
+      "fingerprint": "96070e16-818e-520c-8003-679f1e6c22d9",
+      "cores": null,
+      "memory": null,
+      "disk": null,
+      "ip": null,
+      "hostname": null,
+      "platform": null,
+      "name": "sjc22-bt147-cf25a971-78bc-4fdc-95ae-15dd939aee0e-FE7539809B0E.local",
+      "requireHeartbeat": false,
+      "heartbeatStatus": "NOT_STARTED",
+      "heartbeatDuration": 600,
+      "maxProcesses": null,
+      "lastCheckOut": null,
+      "lastHeartbeat": null,
+      "nextHeartbeat": null,
+      "metadata": {},
+      "created": "2026-06-17T05:07:11.992Z",
+      "updated": "2026-06-17T05:07:11.992Z"
+    },
+    "relationships": {
+      "account": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76"
+        },
+        "data": {
+          "type": "accounts",
+          "id": "dcc57dd7-bfd1-4469-a4f4-7c8545660f76"
+        }
+      },
+      "environment": {
+        "links": {
+          "related": null
+        },
+        "data": null
+      },
+      "product": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/product"
+        },
+        "data": {
+          "type": "products",
+          "id": "32563378-50b5-48be-a4c2-21f11fd78bc8"
+        }
+      },
+      "group": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/group"
+        },
+        "data": null
+      },
+      "license": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/license"
+        },
+        "data": {
+          "type": "licenses",
+          "id": "30153821-7575-4361-b1e8-0bfbce315bf3"
+        }
+      },
+      "owner": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/owner"
+        },
+        "data": null
+      },
+      "components": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/components"
+        }
+      },
+      "processes": {
+        "links": {
+          "related": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b/processes"
+        }
+      }
+    },
+    "links": {
+      "self": "/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines/780d38f3-5108-40dd-8657-641ccb2a2b0b"
+    }
+  }
+}
 Capturing screen to 13_mac_activation_result.png...
-MAIN_ERR: Debugger ending on ws://127.0.0.1:49185/cc8f8b76-d8b7-4a0d-9427-cdfe0c8f4b10
+MAIN_ERR: Debugger ending on ws://127.0.0.1:49186/e0ca8173-d548-4ef2-bd2b-095252b671d8
 For help, see: https://nodejs.org/en/docs/inspector
 Test completed successfully!
