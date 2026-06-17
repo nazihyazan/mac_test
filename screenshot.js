@@ -13,6 +13,11 @@ async function takeScreenshot(window, filename) {
   try {
     console.log('Launching Electron app...');
     const electronApp = await electron.launch({ args: ['.'] });
+    
+    // Capture main process logs
+    electronApp.process().stdout.on('data', data => console.log('MAIN: ' + data.toString().trim()));
+    electronApp.process().stderr.on('data', data => console.error('MAIN_ERR: ' + data.toString().trim()));
+
     const window = await electronApp.firstWindow();
     
     // Fixed delay instead of waitForLoadState
@@ -175,6 +180,10 @@ async function takeScreenshot(window, filename) {
     await window.waitForTimeout(6000);
     
     // Ensure the modal stays open if an error occurred
+    const errVisible = await window.evaluate(() => document.getElementById('license-error').style.display !== 'none');
+    
+    require('fs').writeFileSync('activation_log.txt', `Timestamp: ${Date.now()}\nError visible: ${errVisible}\n`);
+    
     await window.evaluate(() => {
       if (document.getElementById('license-error').style.display !== 'none') {
         document.getElementById('license-overlay').classList.add('active');
