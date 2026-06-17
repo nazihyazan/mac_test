@@ -118,10 +118,8 @@ if (closeBtn) {
 const minimizeBtn = document.getElementById('minimize-btn');
 if (minimizeBtn) minimizeBtn.addEventListener('click', () => api.minimize());
 
-const maximizeBtn = document.getElementById('maximize-btn');
 if (maximizeBtn) maximizeBtn.addEventListener('click', () => api.toggleMaximize());
 
-const pinBtn = document.getElementById('pin-btn');
 if (pinBtn) pinBtn.addEventListener('click', () => api.togglePin());
 
 api.onWindowStatus(updateWindowStatus);
@@ -130,9 +128,14 @@ api.getWindowState().then(updateWindowStatus).catch(() => {});
 function updateWindowStatus(status) {
   if (!status) return;
 
-  pinBtn.classList.toggle('pinned', Boolean(status.pinned));
-  pinBtn.setAttribute('aria-pressed', String(Boolean(status.pinned)));
-  maximizeBtn.classList.toggle('maximized', Boolean(status.maximized));
+  if (pinBtn) {
+    pinBtn.classList.toggle('pinned', Boolean(status.pinned));
+    pinBtn.setAttribute('aria-pressed', String(Boolean(status.pinned)));
+  }
+
+  if (maximizeBtn) {
+    maximizeBtn.classList.toggle('maximized', Boolean(status.maximized));
+  }
 }
 
 function createId() {
@@ -611,7 +614,7 @@ function renderTextCard(item, section) {
       </div>
     </div>
     <div class="text-card-body">
-      <textarea class="text-card-editor" placeholder="Text">${item.text}</textarea>
+      <textarea class="text-card-editor" placeholder="Text">${escapeHtml(item.text || '')}</textarea>
     </div>
   `;
 
@@ -1392,13 +1395,9 @@ async function init() {
           licenseOverlay.classList.remove('active');
           isLicenseModalOpen = false;
           showToast('Activation Successful ✓');
-          // Reload board content
-          if (boardEl) boardEl.innerHTML = '';
-          const sections = await api.loadData();
-          if (sections) {
-            state.sections = sections;
-            renderSections();
-          }
+          state = normalizeLoadedBoard(await api.loadBoard());
+          render();
+          updateUsageBadge();
         } else {
           if (licenseError) {
             licenseError.textContent = typeof success === 'string' ? success : 'Invalid License Key or Fingerprint mismatch.';
@@ -1427,8 +1426,10 @@ async function init() {
   if (historyBtn) {
     historyBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (typeof showHistoryDropdown === 'function') {
-        showHistoryDropdown(typeof clipHistory !== 'undefined' ? clipHistory : []);
+      if (typeof api.requestClipboardHistory === 'function') {
+        api.requestClipboardHistory();
+      } else if (typeof showHistoryDropdown === 'function') {
+        showHistoryDropdown([]);
       }
     });
   }
@@ -1808,6 +1809,7 @@ document.addEventListener('mousemove', (e) => {
 });
 
 function showHistoryDropdown(history) {
+  const items = Array.isArray(history) ? history : [];
   let dropdown = document.getElementById('history-dropdown');
   if (!dropdown) {
     dropdown = document.createElement('div');
@@ -1823,17 +1825,18 @@ function showHistoryDropdown(history) {
   
   dropdown.innerHTML = '<h3>Clipboard History</h3>';
   
-  if (history.length === 0) {
+  if (items.length === 0) {
     dropdown.innerHTML += '<div class="history-empty">No recent clips found.</div>';
   } else {
-    history.forEach(item => {
+    items.forEach(item => {
+      const content = String(item.content || '');
       const el = document.createElement('div');
       el.className = 'history-item';
       
       const textSpan = document.createElement('span');
       textSpan.className = 'history-item-text';
-      textSpan.textContent = item.content.length > 50 ? item.content.substring(0, 50) + '...' : item.content;
-      textSpan.title = item.content;
+      textSpan.textContent = content.length > 50 ? content.substring(0, 50) + '...' : content;
+      textSpan.title = content;
       
       const copyBtn = document.createElement('button');
       copyBtn.className = 'history-copy-btn';
@@ -1842,7 +1845,7 @@ function showHistoryDropdown(history) {
       
       copyBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        navigator.clipboard.writeText(item.content).then(() => {
+        navigator.clipboard.writeText(content).then(() => {
           showToast('Copied to clipboard');
           dropdown.style.display = 'none';
         });
@@ -1855,7 +1858,7 @@ function showHistoryDropdown(history) {
       
       pasteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        addText(item.content);
+        addText(content);
         dropdown.style.display = 'none';
       });
       
@@ -1994,4 +1997,3 @@ sectionsEl.addEventListener('dragend', (e) => {
     el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
   });
 });
-

@@ -54,6 +54,10 @@ async function verifyWithKeygen(email, key) {
     
     // If the key is valid but this specific machine hasn't been registered yet (either no machines at all, or a different machine is registered)
     if (data.meta && (data.meta.code === 'NO_MACHINES' || data.meta.code === 'NO_MACHINE' || data.meta.code === 'FINGERPRINT_SCOPE_MISMATCH' || data.meta.code === 'FINGERPRINT_RESOLUTION_FAILED')) {
+      if (!data.data || !data.data.id) {
+        return 'Registration Failed: License id was not returned by Keygen.';
+      }
+
       console.log('Machine not registered. Attempting to register machine...');
       
       const activateResponse = await net.fetch('https://api.keygen.sh/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines', {
@@ -688,7 +692,14 @@ ipcMain.handle('license:get-daily-usage', () => {
 });
 
 ipcMain.on('open-external', (_event, url) => {
-  shell.openExternal(url);
+  try {
+    const parsedUrl = new URL(String(url || ''));
+    if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'mailto:') {
+      shell.openExternal(parsedUrl.toString());
+    }
+  } catch (error) {
+    console.error('Blocked invalid external URL:', error);
+  }
 });
 
 ipcMain.handle('media:import', async (_event, payload) => {
@@ -841,7 +852,14 @@ app.whenReady().then(() => {
         fileName = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
       }
 
+      fileName = path.basename(fileName);
       let filePath = path.join(mediaDir, fileName);
+      const resolvedMediaDir = path.resolve(mediaDir);
+      const resolvedFilePath = path.resolve(filePath);
+
+      if (!resolvedFilePath.startsWith(`${resolvedMediaDir}${path.sep}`)) {
+        throw new Error('Blocked media path outside user data directory.');
+      }
 
       // Backwards compatibility for broken legacy lowercase host URLs
       if (!fs.existsSync(filePath)) {
@@ -880,49 +898,53 @@ app.whenReady().then(() => {
   });
 
   setInterval(() => {
-    const text = clipboard.readText();
-    if (text && text !== lastText) {
-      lastText = text;
-      // Push new text to history, remove duplicates, keep top 10
-      const existingIdx = clipHistory.findIndex(item => item.type === 'text' && item.content === text);
-      if (existingIdx !== -1) clipHistory.splice(existingIdx, 1);
-      clipHistory.unshift({ type: 'text', content: text, timestamp: Date.now() });
-      if (clipHistory.length > 10) clipHistory.pop();
-    }
-
-    // Auto-import clipboard images as screenshots
-    const img = clipboard.readImage();
-    if (img && !img.isEmpty()) {
-      const imgBuffer = img.toPNG();
-      const imgHash = crypto.createHash('md5').update(imgBuffer).digest('hex');
-      if (imgHash !== lastImageHash) {
-        lastImageHash = imgHash;
-        
-        if (ignoreNextClipboardImage) {
-          ignoreNextClipboardImage = false;
-          return;
-        }
-        
-        const fileName = `${Date.now()}-${crypto.randomUUID()}.png`;
-        const dest = path.join(getMediaDir(), fileName);
-        fsp.mkdir(getMediaDir(), { recursive: true }).then(() => {
-          return fsp.writeFile(dest, imgBuffer);
-        }).then(() => {
-          if (mainWindow && !mainWindow.isDestroyed()) {
-             mainWindow.webContents.send('media:auto-added', {
-               id: crypto.randomUUID(),
-               kind: 'image',
-               name: `Screenshot_${Date.now()}.png`,
-               mime: 'image/png',
-               size: imgBuffer.length,
-               storage: 'file',
-               fileName,
-               src: `app-media://media/${fileName}`,
-               createdAt: new Date().toISOString()
-             });
-          }
-        }).catch(err => console.error('Failed to auto-save clipboard image:', err));
+    try {
+      const text = clipboard.readText();
+      if (text && text !== lastText) {
+        lastText = text;
+        // Push new text to history, remove duplicates, keep top 10
+        const existingIdx = clipHistory.findIndex(item => item.type === 'text' && item.content === text);
+        if (existingIdx !== -1) clipHistory.splice(existingIdx, 1);
+        clipHistory.unshift({ type: 'text', content: text, timestamp: Date.now() });
+        if (clipHistory.length > 10) clipHistory.pop();
       }
+
+      // Auto-import clipboard images as screenshots
+      const img = clipboard.readImage();
+      if (img && !img.isEmpty()) {
+        const imgBuffer = img.toPNG();
+        const imgHash = crypto.createHash('md5').update(imgBuffer).digest('hex');
+        if (imgHash !== lastImageHash) {
+          lastImageHash = imgHash;
+
+          if (ignoreNextClipboardImage) {
+            ignoreNextClipboardImage = false;
+            return;
+          }
+
+          const fileName = `${Date.now()}-${crypto.randomUUID()}.png`;
+          const dest = path.join(getMediaDir(), fileName);
+          fsp.mkdir(getMediaDir(), { recursive: true }).then(() => {
+            return fsp.writeFile(dest, imgBuffer);
+          }).then(() => {
+            if (mainWindow && !mainWindow.isDestroyed()) {
+               mainWindow.webContents.send('media:auto-added', {
+                 id: crypto.randomUUID(),
+                 kind: 'image',
+                 name: `Screenshot_${Date.now()}.png`,
+                 mime: 'image/png',
+                 size: imgBuffer.length,
+                 storage: 'file',
+                 fileName,
+                 src: `app-media://media/${fileName}`,
+                 createdAt: new Date().toISOString()
+               });
+            }
+          }).catch(err => console.error('Failed to auto-save clipboard image:', err));
+        }
+      }
+    } catch (error) {
+      console.error('Clipboard polling failed:', error);
     }
   }, 1000);
 
@@ -932,8 +954,17 @@ app.whenReady().then(() => {
       mainWindow.webContents.send('history:show', clipHistory);
     }
   };
-  globalShortcut.register('CommandOrControl+Shift+V', showHistory);
-  globalShortcut.register('Control+Shift+V', showHistory);
+  ipcMain.on('history:request', showHistory);
+
+  const registerShortcut = (accelerator, handler) => {
+    const registered = globalShortcut.register(accelerator, handler);
+    if (!registered) {
+      console.error(`Failed to register shortcut: ${accelerator}`);
+    }
+  };
+
+  registerShortcut('CommandOrControl+Shift+V', showHistory);
+  registerShortcut('Control+Shift+V', showHistory);
 
   if (process.platform === 'win32' || process.platform === 'darwin') {
     const takeScreenshot = () => {
@@ -951,8 +982,8 @@ app.whenReady().then(() => {
         });
       }
     };
-    globalShortcut.register('CommandOrControl+Shift+S', takeScreenshot);
-    globalShortcut.register('Control+Shift+S', takeScreenshot);
+    registerShortcut('CommandOrControl+Shift+S', takeScreenshot);
+    registerShortcut('Control+Shift+S', takeScreenshot);
   }
   app.on('activate', showWindow);
 });

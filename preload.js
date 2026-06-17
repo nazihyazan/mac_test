@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('floatingBoard', {
   onCopyScreenshot: (callback) => subscribe('context-menu:copy-screenshot', callback),
   
   onHistoryShow: (callback) => subscribe('history:show', callback),
+  requestClipboardHistory: () => ipcRenderer.send('history:request'),
   onMediaAutoAdded: (callback) => subscribe('media:auto-added', callback),
   
   onUpdateDownloaded: (callback) => subscribe('updater:update-downloaded', callback),
