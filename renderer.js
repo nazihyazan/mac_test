@@ -1878,28 +1878,6 @@ document.addEventListener('click', (e) => {
       dropdown.style.display = 'none';
     }
   }
-
-      el.appendChild(textSpan);
-      el.appendChild(copyBtn);
-
-      el.addEventListener('click', () => {
-        addMediaToBoard(item.content, 'text');
-        dropdown.style.display = 'none';
-      });
-      dropdown.appendChild(el);
-    });
-  }
-  
-  dropdown.style.display = 'block';
-});
-
-document.addEventListener('click', (event) => {
-  const dropdown = document.getElementById('history-dropdown');
-  if (dropdown && dropdown.style.display === 'block') {
-    if (!dropdown.contains(event.target)) {
-      dropdown.style.display = 'none';
-    }
-  }
 });
 
 api.onMediaAutoAdded(async (item) => {
