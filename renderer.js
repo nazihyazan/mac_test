@@ -107,15 +107,22 @@ try {
   historyItems = [];
 }
 
-document.getElementById('close-btn').addEventListener('click', () => {
-  saveNow();
-  api.close();
-});
+const closeBtn = document.getElementById('close-btn');
+if (closeBtn) {
+  closeBtn.addEventListener('click', () => {
+    saveNow();
+    api.close();
+  });
+}
 
-document.getElementById('minimize-btn').addEventListener('click', () => api.minimize());
-maximizeBtn.addEventListener('click', () => api.toggleMaximize());
+const minimizeBtn = document.getElementById('minimize-btn');
+if (minimizeBtn) minimizeBtn.addEventListener('click', () => api.minimize());
 
-pinBtn.addEventListener('click', () => api.togglePin());
+const maximizeBtn = document.getElementById('maximize-btn');
+if (maximizeBtn) maximizeBtn.addEventListener('click', () => api.toggleMaximize());
+
+const pinBtn = document.getElementById('pin-btn');
+if (pinBtn) pinBtn.addEventListener('click', () => api.togglePin());
 
 api.onWindowStatus(updateWindowStatus);
 api.getWindowState().then(updateWindowStatus).catch(() => {});

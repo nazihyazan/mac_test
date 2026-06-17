@@ -25,11 +25,11 @@ jobs:
       - name: Run screenshot script
         run: node screenshot.js > playwright_output.txt 2>&1
         
-      - name: Commit and Push Screenshots
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git checkout -B screenshots
-          git add *.png *.txt
-          git commit -m "Update screenshots and logs"
-          git push -f origin screenshots
+      - name: Upload Screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-screenshots
+          path: |
+            *.png
+            playwright_output.txt
