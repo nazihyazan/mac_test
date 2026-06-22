@@ -1,6 +1,6 @@
 {
   "name": "floatboard",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Mac-only floating clipboard manager",
   "main": "main.js",
   "scripts": {
