@@ -64,7 +64,7 @@
     },
     "snap": {
       "summary": "Floating clipboard manager",
-      "confinement": "classic",
+      "confinement": "strict",
       "grade": "stable"
     }
   }
