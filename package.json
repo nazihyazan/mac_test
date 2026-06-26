@@ -64,7 +64,8 @@
     },
     "snap": {
       "summary": "Floating clipboard manager",
-      "confinement": "strict",
+      "description": "FloatBoard is a productivity-focused, floating clipboard manager that allows you to easily store, organize, and paste your clipboard history directly from a clean, unobtrusive floating overlay. Designed for speed and efficiency.",
+      "confinement": "classic",
       "grade": "stable"
     }
   }
