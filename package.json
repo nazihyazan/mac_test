@@ -7,7 +7,7 @@
     "start": "env -u ELECTRON_RUN_AS_NODE electron .",
     "dev": "env -u ELECTRON_RUN_AS_NODE electron .",
     "build:mac": "electron-builder --mac zip -c.directories.output=dist/macos",
-    "build:linux": "electron-builder --linux -c.publish=never -c.directories.output=dist/linux"
+    "build:linux": "electron-builder --linux --publish never -c.directories.output=dist/linux"
   },
   "keywords": [
     "clipboard",
