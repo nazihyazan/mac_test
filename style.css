@@ -1294,6 +1294,7 @@ input:checked + .slider:before {
 .platform-linux .chrome-bar {
   grid-template-columns: auto minmax(0, 1fr) 138px;
   padding-right: 0;
+  padding-left: 10px;
 }
 .platform-win32 .traffic-lights,
 .platform-linux .traffic-lights {

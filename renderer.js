@@ -1939,9 +1939,13 @@ document.addEventListener('mouseup', () => {
   previewDragging = false;
 });
 
-// Auto-focus window when mouse enters so shortcuts work instantly
+// Auto-focus window when mouse enters or moves so shortcuts work instantly
+// This replaces the buggy main.js setInterval that broke Linux workspaces
 document.body.addEventListener('mouseenter', () => {
-  if (api.focus) api.focus();
+  if (!document.hasFocus() && api.focus) api.focus();
+});
+document.body.addEventListener('mousemove', () => {
+  if (!document.hasFocus() && api.focus) api.focus();
 });
 
 // --- Drag and Drop Reordering ---
