@@ -1,0 +1,68 @@
+name: Mac UI Test
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Run screenshot script
+        run: node screenshot.js > playwright_output.txt 2>&1
+        
+      - name: Upload Screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-screenshots
+          path: |
+            *.png
+            playwright_output.txt
+
+      - name: Build Mac App
+        if: always()
+        run: npm run build:mac
+        
+      - name: Upload Mac App
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: floatboard-mac-app
+          path: dist/macos/*.zip
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Build Linux App
+        run: npm run build:linux
+        
+      - name: Upload Linux App
+        uses: actions/upload-artifact@v4
+        with:
+          name: floatboard-linux-app
+          path: dist/linux/*.AppImage
