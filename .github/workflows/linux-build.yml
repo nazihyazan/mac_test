@@ -22,16 +22,16 @@ jobs:
       - name: Install dependencies
         run: npm install
         
-      - name: Install Snapcraft
-        run: sudo snap install snapcraft --classic
+      - name: Install Flatpak Builder
+        run: sudo apt-get update && sudo apt-get install -y flatpak flatpak-builder
         
       - name: Build Linux App
         run: npm run build:linux
         
-      - name: Upload Linux App (Snap & AppImage)
+      - name: Upload Linux App (Flatpak & AppImage)
         uses: actions/upload-artifact@v4
         with:
           name: floatboard-linux-app
           path: |
-            dist/linux/*.snap
+            dist/linux/*.flatpak
             dist/linux/*.AppImage

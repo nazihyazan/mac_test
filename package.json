@@ -55,7 +55,7 @@
     },
     "linux": {
       "target": [
-        "snap",
+        "flatpak",
         "AppImage"
       ],
       "category": "Utility",
