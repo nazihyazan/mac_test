@@ -1,0 +1,37 @@
+name: Linux Build
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Install Snapcraft
+        run: sudo snap install snapcraft --classic
+        
+      - name: Build Linux App
+        run: npm run build:linux
+        
+      - name: Upload Linux App (Snap & AppImage)
+        uses: actions/upload-artifact@v4
+        with:
+          name: floatboard-linux-app
+          path: |
+            dist/linux/*.snap
+            dist/linux/*.AppImage

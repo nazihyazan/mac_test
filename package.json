@@ -6,7 +6,8 @@
   "scripts": {
     "start": "env -u ELECTRON_RUN_AS_NODE electron .",
     "dev": "env -u ELECTRON_RUN_AS_NODE electron .",
-    "build:mac": "electron-builder --mac zip -c.directories.output=dist/macos"
+    "build:mac": "electron-builder --mac zip -c.directories.output=dist/macos",
+    "build:linux": "electron-builder --linux -c.directories.output=dist/linux"
   },
   "keywords": [
     "clipboard",
@@ -51,6 +52,20 @@
       ],
       "category": "public.app-category.productivity",
       "artifactName": "FloatBoard-${version}-mac.${ext}"
+    },
+    "linux": {
+      "target": [
+        "snap",
+        "AppImage"
+      ],
+      "category": "Utility",
+      "executableName": "floatboard",
+      "artifactName": "FloatBoard-${version}-linux.${ext}"
+    },
+    "snap": {
+      "summary": "Floating clipboard manager",
+      "confinement": "classic",
+      "grade": "stable"
     }
   }
 }
