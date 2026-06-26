@@ -1347,6 +1347,12 @@ input:checked + .slider:before {
 .platform-win32 .window-actions,
 .platform-linux .window-actions {
   order: 1;
+  justify-content: flex-start;
+  padding-left: 10px;
+}
+.platform-win32 .linux-window-controls,
+.platform-linux .linux-window-controls {
+  order: 3;
 }
 .platform-win32 .window-title,
 .platform-linux .window-title {
