@@ -1606,3 +1606,35 @@ body.platform-linux .chrome-bar {
 .text-card.drag-over-bottom, .media-item.drag-over-bottom {
   box-shadow: 0 4px 0 var(--chrome-border-color) !important;
 }
+
+/* Linux Window Controls */
+.linux-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  padding-right: 10px;
+  -webkit-app-region: no-drag;
+}
+.win-btn {
+  background: transparent;
+  border: none;
+  color: var(--body-color);
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+.win-btn:hover {
+  background: var(--bg-hover);
+  opacity: 1;
+}
+.win-btn.close:hover {
+  background: #ff4d4f;
+  color: white;
+}
+.win-btn svg { width: 12px; height: 12px; }

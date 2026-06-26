@@ -5,7 +5,23 @@ document.documentElement.setAttribute('data-theme', localStorage.getItem('theme'
 
 // Add platform class for OS specific styling
 if (api.getPlatform) {
-  document.body.classList.add(`platform-${api.getPlatform()}`);
+  const platform = api.getPlatform();
+  document.body.classList.add(`platform-${platform}`);
+  
+  if (platform !== 'darwin') {
+    const linuxControls = document.getElementById('linux-window-controls');
+    if (linuxControls) linuxControls.style.display = 'flex';
+    
+    document.getElementById('minimize-btn')?.addEventListener('click', () => {
+      api.minimize();
+    });
+    document.getElementById('maximize-btn')?.addEventListener('click', () => {
+      api.toggleMaximize();
+    });
+    document.getElementById('close-btn')?.addEventListener('click', () => {
+      api.close();
+    });
+  }
 }
 
 const TYPE_META = {

@@ -808,6 +808,21 @@ ipcMain.handle('media:save-blob', async (event, arrayBuffer) => {
   }
 });
 
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+  return;
+}
+
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+  // Someone tried to run a second instance, we should focus our window.
+  if (mainWindow) {
+    if (!mainWindow.isVisible()) mainWindow.show();
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+
 app.whenReady().then(() => {
   // Set the App User Model ID so the taskbar icon shows correctly on Windows and Linux
   app.setAppUserModelId('com.nazih.floatboard');
