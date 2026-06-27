@@ -59,7 +59,8 @@
       ],
       "category": "Utility",
       "executableName": "floatboard",
-      "artifactName": "FloatBoard-${version}-linux.${ext}"
+      "artifactName": "FloatBoard-${version}-linux.${ext}",
+      "icon": "build/icon.png"
     },
     "snap": {
       "summary": "Floating clipboard manager",

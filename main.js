@@ -4,6 +4,9 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const { exec } = require('child_process');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows', 'true');
+app.commandLine.appendSwitch('disable-renderer-backgrounding', 'true');
+app.commandLine.appendSwitch('disable-background-timer-throttling', 'true');
 
 
 // Auto Updater config
