@@ -180,7 +180,7 @@ function saveWindowStateSoon() {
 
 function sendWindowStatus() {
   if (mainWindow && !mainWindow.isDestroyed()) {
-    const isMax = process.platform === 'win32' ? (normalBounds !== null) : mainWindow.isMaximized();
+    const isMax = mainWindow.isMaximized();
     mainWindow.webContents.send('window:status', {
       pinned: mainWindow.isAlwaysOnTop(),
       maximized: isMax,
@@ -874,7 +874,7 @@ app.whenReady().then(() => {
   });
   // Added theme:change for instant background color transition
   ipcMain.on('theme:change', (_event, theme) => {
-    if (mainWindow && !mainWindow.isDestroyed() && process.platform !== 'win32') {
+    if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.setBackgroundColor(theme === 'dark' ? '#1a1a1e' : '#ffffff');
     }
   });

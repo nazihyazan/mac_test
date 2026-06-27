@@ -1532,11 +1532,8 @@ input:checked + .slider:before {
   white-space: pre;
 }
 
-/* Windows Native Frame Overrides */
-
-
-body.platform-win32 .window-shell,
-body.platform-linux .window-shell {
+/* Linux Overrides */
+.window-shell {
   border: none !important;
   border-radius: 0 !important;
   background: #ffffff !important;
@@ -1545,18 +1542,15 @@ body.platform-linux .window-shell {
   -webkit-backdrop-filter: none !important;
 }
 
-body.platform-win32 .chrome-bar,
-body.platform-linux .chrome-bar {
+.chrome-bar {
   background: #f3f3f3 !important;
 }
 
-[data-theme="dark"] body.platform-win32 .window-shell,
-[data-theme="dark"] body.platform-linux .window-shell {
+[data-theme="dark"] .window-shell {
   background: #1e1e1e !important;
 }
 
-[data-theme="dark"] body.platform-win32 .chrome-bar,
-[data-theme="dark"] body.platform-linux .chrome-bar {
+[data-theme="dark"] .chrome-bar {
   background: #2d2d30 !important;
 }
 
