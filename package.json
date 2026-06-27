@@ -49,7 +49,8 @@
       "target": [
         "AppImage",
         "deb",
-        "rpm"
+        "rpm",
+        "snap"
       ],
       "category": "Utility;Office;TextTools;",
       "executableName": "floatboard",
