@@ -1,7 +1,7 @@
 {
   "name": "floatboard",
   "version": "1.0.15",
-  "description": "Mac-only floating clipboard manager",
+  "description": "A fast and unobtrusive floating clipboard manager for Linux",
   "main": "main.js",
   "scripts": {
     "start": "env -u ELECTRON_RUN_AS_NODE electron .",

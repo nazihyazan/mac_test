@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=FloatBoard
+Exec=floatboard
+Terminal=false
+Type=Application
+Icon=com.nazih.floatboard
+StartupWMClass=floatboard
+Comment=A fast and unobtrusive floating clipboard manager for Linux
+Categories=Utility;Productivity;

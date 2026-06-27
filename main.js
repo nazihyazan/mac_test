@@ -804,6 +804,15 @@ ipcMain.handle('media:save-blob', async (event, arrayBuffer) => {
   }
 });
 
+const takeScreenshot = () => {
+  const cmd = `gdbus call --session --dest org.freedesktop.portal.Desktop --object-path /org/freedesktop/portal/desktop --method org.freedesktop.portal.Screenshot.Screenshot "" "{'interactive': <true>}" || gnome-screenshot -ac || spectacle -rbc || flameshot gui || xfce4-screenshooter -rc`;
+  exec(cmd, (error) => {
+    if (error) {
+      console.error('Failed to trigger native screenshot tool:', error);
+    }
+  });
+};
+
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
@@ -811,6 +820,10 @@ if (!gotTheLock) {
 }
 
 app.on('second-instance', (event, commandLine, workingDirectory) => {
+  if (commandLine.includes('--screenshot')) {
+    takeScreenshot();
+    return;
+  }
   // Someone tried to run a second instance, we should focus our window.
   if (mainWindow) {
     if (!mainWindow.isVisible()) mainWindow.show();
@@ -961,6 +974,7 @@ app.whenReady().then(() => {
 
   globalShortcut.register('CommandOrControl+Shift+V', showHistory);
 
+  globalShortcut.register('CommandOrControl+Shift+S', takeScreenshot);
 
   app.on('activate', showWindow);
 });
