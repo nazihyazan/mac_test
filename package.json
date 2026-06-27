@@ -47,12 +47,16 @@
     ],
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb",
+        "rpm"
       ],
-      "category": "Utility",
+      "category": "Utility;Office;TextTools;",
       "executableName": "floatboard",
       "artifactName": "FloatBoard-${version}-linux.${ext}",
-      "icon": "build/icon.png"
+      "icon": "build/icon.png",
+      "synopsis": "A floating clipboard manager for Linux.",
+      "description": "FloatBoard is a fast, unobtrusive floating clipboard manager designed for productivity. Easily store, organize, and paste your clipboard history."
     },
     "snap": {
       "summary": "Floating clipboard manager",

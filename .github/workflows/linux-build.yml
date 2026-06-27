@@ -30,10 +30,12 @@ jobs:
       - name: Build Linux App
         run: npm run build:linux
         
-      - name: Upload Linux App (Flatpak & AppImage)
+      - name: Upload Linux App (Flatpak, AppImage, DEB, RPM)
         uses: actions/upload-artifact@v4
         with:
           name: floatboard-linux-app
           path: |
             dist/linux/*.flatpak
             dist/linux/*.AppImage
+            dist/linux/*.deb
+            dist/linux/*.rpm
