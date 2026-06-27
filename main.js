@@ -315,8 +315,7 @@ function createWindow() {
     minHeight: MIN_BOUNDS.height,
     title: APP_NAME,
     icon: getIconPath(),
-    frame: process.platform === 'darwin',
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    frame: false,
     transparent: false,
     backgroundColor: '#ffffff',
     hasShadow: true,
@@ -333,14 +332,7 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false,
       backgroundThrottling: false
-    },
-    ...(process.platform === 'darwin' ? {
-      vibrancy: 'under-window',
-      visualEffectState: 'active'
-    } : {}),
-    ...(process.platform === 'win32' ? {
-      // backgroundMaterial removed to keep it solid white
-    } : {})
+    }
   });
 
   mainWindow.setMenuBarVisibility(false);
@@ -969,33 +961,7 @@ app.whenReady().then(() => {
 
   globalShortcut.register('CommandOrControl+Shift+V', showHistory);
 
-  if (process.platform === 'darwin') {
-    globalShortcut.register('Control+Shift+V', showHistory);
-  }
 
-  if (process.platform === 'win32' || process.platform === 'darwin') {
-    const takeScreenshot = () => {
-      let cmd = '';
-      if (process.platform === 'win32') {
-        cmd = 'powershell.exe -Command "Start-Process ms-screenclip:"';
-      } else if (process.platform === 'darwin') {
-        cmd = 'screencapture -i -c';
-      }
-      if (cmd) {
-        exec(cmd, (error) => {
-          if (error) {
-            console.error('Failed to trigger native screenshot tool:', error);
-          }
-        });
-      }
-    };
-
-    globalShortcut.register('CommandOrControl+Shift+S', takeScreenshot);
-
-    if (process.platform === 'darwin') {
-      globalShortcut.register('Control+Shift+S', takeScreenshot);
-    }
-  }
   app.on('activate', showWindow);
 });
 

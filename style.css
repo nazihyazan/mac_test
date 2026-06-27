@@ -1277,38 +1277,23 @@ input:checked + .slider:before {
 
 /* OS-Specific Title Bar UI */
 
-/* Mac (Darwin) */
-/* Hide HTML buttons since we use native titleBarStyle: 'hidden' traffic lights */
-.platform-darwin .traffic-lights,
-.platform-darwin .windows-traffic-lights {
-  display: none;
-}
-/* Shift the layout so title doesn't overlap with native left traffic lights */
-.platform-darwin .chrome-bar {
-  grid-template-columns: 80px minmax(0, 1fr) 48px;
-  padding-left: 80px;
-}
-
-/* Windows and Linux use HTML traffic lights but styled as Windows controls */
-.platform-win32 .chrome-bar,
-.platform-linux .chrome-bar {
+/* Windows and Linux Controls (Now Default) */
+.chrome-bar {
   grid-template-columns: auto minmax(0, 1fr) 138px;
   padding-right: 0;
   padding-left: 10px;
 }
-.platform-win32 .traffic-lights,
-.platform-linux .traffic-lights {
+.traffic-lights {
   order: 3;
   justify-content: flex-end;
   gap: 0;
   height: 100%;
 }
-.platform-win32 .traffic-button,
-.platform-linux .traffic-button {
+.traffic-button {
   width: 46px;
   height: 42px; /* Full height of titlebar */
   border-radius: 0;
-  background: rgba(0, 0, 0, 0.01); /* Fix hit testing for no-drag on Windows */
+  background: rgba(0, 0, 0, 0.01); /* Fix hit testing */
   box-shadow: none;
   border: none;
   display: flex;
@@ -1317,50 +1302,38 @@ input:checked + .slider:before {
   color: var(--body-color, #000);
   opacity: 0.8;
 }
-.platform-win32 .traffic-button.minimize,
-.platform-linux .traffic-button.minimize,
-.platform-win32 .traffic-button.maximize,
-.platform-linux .traffic-button.maximize {
+.traffic-button.minimize,
+.traffic-button.maximize,
+.traffic-button.close {
   background: rgba(0, 0, 0, 0.01);
 }
-.platform-win32 .traffic-button.close,
-.platform-linux .traffic-button.close {
-  background: rgba(0, 0, 0, 0.01);
-}
-.platform-win32 .traffic-button:hover,
-.platform-linux .traffic-button:hover {
+.traffic-button:hover {
   background: rgba(128, 128, 128, 0.2);
   opacity: 1;
   filter: none;
 }
-.platform-win32 .traffic-button.close:hover,
-.platform-linux .traffic-button.close:hover {
+.traffic-button.close:hover {
   background: #e81123;
   color: white;
 }
-.platform-win32 .win-icon,
-.platform-linux .win-icon {
+.win-icon {
   display: block;
   width: 10px;
   height: 10px;
 }
 
-.platform-win32 .window-actions,
-.platform-linux .window-actions {
+.window-actions {
   order: 1;
   justify-content: flex-start;
   padding-left: 10px;
 }
-.platform-win32 .linux-window-controls,
-.platform-linux .linux-window-controls {
+.linux-window-controls {
   order: 3;
 }
-.platform-win32 .window-title,
-.platform-linux .window-title {
+.window-title {
   order: 2;
 }
-.platform-win32 .windows-traffic-lights,
-.platform-linux .windows-traffic-lights {
+.windows-traffic-lights {
   order: 3;
   margin-right: 0;
 }
