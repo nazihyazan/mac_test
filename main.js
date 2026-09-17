@@ -4,7 +4,7 @@ const autoUpdater = process.env.SNAP ? null : require('electron-updater').autoUp
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
-const { restoreWindowState, MIN_BOUNDS } = require('./window-state');
+const { restoreWindowState, DEFAULT_BOUNDS, MIN_BOUNDS } = require('./window-state');
 const { exec } = require('child_process');
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows', 'true');
 app.commandLine.appendSwitch('disable-renderer-backgrounding', 'true');

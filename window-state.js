@@ -28,4 +28,4 @@ function restoreWindowState(savedState, workAreas, primaryArea) {
   return bounds;
 }
 
-module.exports = { restoreWindowState, MIN_BOUNDS };
+module.exports = { restoreWindowState, DEFAULT_BOUNDS, MIN_BOUNDS };
