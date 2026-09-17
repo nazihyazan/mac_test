@@ -1,8 +1,10 @@
 const { app, BrowserWindow, Menu, Tray, globalShortcut, ipcMain, nativeImage, protocol, net, shell, clipboard, screen } = require('electron');
-const { autoUpdater } = require('electron-updater');
+// Snap updates are installed by snapd, not the AppImage updater.
+const autoUpdater = process.env.SNAP ? null : require('electron-updater').autoUpdater;
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
+const { restoreWindowState, MIN_BOUNDS } = require('./window-state');
 const { exec } = require('child_process');
 app.commandLine.appendSwitch('disable-backgrounding-occluded-windows', 'true');
 app.commandLine.appendSwitch('disable-renderer-backgrounding', 'true');
@@ -10,12 +12,16 @@ app.commandLine.appendSwitch('disable-background-timer-throttling', 'true');
 
 
 // Auto Updater config
-autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
+if (autoUpdater) {
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+}
 
 // Add updater IPC handlers
 ipcMain.handle('updater:quit-and-install', () => {
+  if (!autoUpdater) return false;
   autoUpdater.quitAndInstall();
+  return true;
 });
 
 const { pathToFileURL } = require('url');
@@ -99,8 +105,6 @@ async function verifyWithKeygen(email, key) {
 }
 
 const APP_NAME = 'FloatBoard';
-const DEFAULT_BOUNDS = { width: 460, height: 460 };
-const MIN_BOUNDS = { width: 320, height: 280 };
 
 let mainWindow = null;
 let tray = null;
@@ -154,13 +158,11 @@ async function writeJsonAtomic(filePath, data) {
 function loadWindowState() {
   const state = readJsonSync(getWindowStatePath(), {});
 
-  return {
-    x: Number.isFinite(state.x) ? state.x : undefined,
-    y: Number.isFinite(state.y) ? state.y : undefined,
-    width: Math.max(Number(state.width) || DEFAULT_BOUNDS.width, MIN_BOUNDS.width),
-    height: Math.max(Number(state.height) || DEFAULT_BOUNDS.height, MIN_BOUNDS.height),
-    alwaysOnTop: state.alwaysOnTop !== false
-  };
+  return restoreWindowState(
+    state,
+    screen.getAllDisplays().map(display => display.workArea),
+    screen.getPrimaryDisplay().workArea
+  );
 }
 
 function saveWindowStateSoon() {
@@ -311,8 +313,8 @@ function createWindow() {
     y: state.y,
     width: state.width,
     height: state.height,
-    minWidth: MIN_BOUNDS.width,
-    minHeight: MIN_BOUNDS.height,
+    minWidth: Math.min(MIN_BOUNDS.width, state.width),
+    minHeight: Math.min(MIN_BOUNDS.height, state.height),
     title: APP_NAME,
     icon: getIconPath(),
     frame: false,
@@ -839,16 +841,16 @@ app.whenReady().then(() => {
     app.setDesktopName('floatboard.desktop');
   }
 
-  // Check for updates
-  autoUpdater.checkForUpdatesAndNotify().catch(err => {
-    console.error('Failed to check for updates:', err);
-  });
-  
-  autoUpdater.on('update-downloaded', (info) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('updater:update-downloaded', info);
-    }
-  });
+  if (autoUpdater) {
+    autoUpdater.on('update-downloaded', (info) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('updater:update-downloaded', info);
+      }
+    });
+    autoUpdater.checkForUpdatesAndNotify().catch(err => {
+      console.error('Failed to check for updates:', err);
+    });
+  }
 
   // Register custom app-media protocol to load local files safely without webSecurity blocks
   protocol.handle('app-media', async (request) => {

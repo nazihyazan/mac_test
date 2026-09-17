@@ -622,11 +622,13 @@ function renderTextCard(item, section) {
       </div>
     </div>
     <div class="text-card-body">
-      <textarea class="text-card-editor" placeholder="Text">${item.text}</textarea>
+      <textarea class="text-card-editor" placeholder="Text"></textarea>
     </div>
   `;
 
   const textarea = card.querySelector('.text-card-editor');
+  // Clipboard contents are plain text, including strings such as </textarea>.
+  textarea.value = item.text;
 
   function autoResize() {
     textarea.style.height = 'auto';
