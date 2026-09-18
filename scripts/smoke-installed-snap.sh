@@ -1,34 +1,62 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run under an isolated Xvfb display, after installing the actual strict Snap.
-# No Chromium debugging ports or extra snap interfaces are needed for this test.
+# An isolated Xvfb display and a fresh CI user profile exercise the desktop
+# entry FIRST, so opening a terminal cannot accidentally initialize the app.
 log_file=$(mktemp)
-snap_test_pid=
-cleanup() {
-  if [[ -n "$snap_test_pid" ]]; then
-    kill "$snap_test_pid" 2>/dev/null || true
-    wait "$snap_test_pid" 2>/dev/null || true
+launcher_pid=
+window_pid=
+cleanup_app() {
+  if [[ -n "$window_pid" ]]; then
+    kill "$window_pid" 2>/dev/null || true
+    window_pid=
   fi
+  if [[ -n "$launcher_pid" ]]; then
+    kill "$launcher_pid" 2>/dev/null || true
+    wait "$launcher_pid" 2>/dev/null || true
+    launcher_pid=
+  fi
+}
+cleanup() {
+  cleanup_app
   cat "$log_file"
   rm -f "$log_file"
 }
 trap cleanup EXIT
 
-timeout 30s snap run floatboard >"$log_file" 2>&1 &
-snap_test_pid=$!
-for ((attempt = 0; attempt < 50; attempt++)); do
-  window_id=$(xdotool search --onlyvisible --class 'floatboard' 2>/dev/null | head -n 1 || true)
-  if [[ -n "$window_id" ]]; then
-    printf 'PASS installed strict Snap: visible window %s\n' "$window_id"
-    xdotool getwindowname "$window_id"
-    exit 0
+for launch_mode in desktop terminal; do
+  if [[ "$launch_mode" == desktop ]]; then
+    timeout 35s gio launch /var/lib/snapd/desktop/applications/floatboard_floatboard.desktop >>"$log_file" 2>&1 &
+  else
+    timeout 35s snap run floatboard >>"$log_file" 2>&1 &
   fi
-  if ! kill -0 "$snap_test_pid" 2>/dev/null; then
-    echo 'FAIL: installed Snap exited before opening a window' >&2
+  launcher_pid=$!
+  window_id=
+  for ((attempt = 0; attempt < 60; attempt++)); do
+    window_id=$(xdotool search --onlyvisible --class 'floatboard' 2>/dev/null | head -n 1 || true)
+    if [[ -n "$window_id" ]]; then break; fi
+    sleep 0.5
+  done
+  if [[ -z "$window_id" ]]; then
+    echo "FAIL: installed Snap did not open from $launch_mode within 30 seconds" >&2
     exit 1
   fi
-  sleep 0.5
+  window_pid=$(xdotool getwindowpid "$window_id")
+  sleep 2
+  kill -0 "$window_pid"
+  xdotool getwindowname "$window_id"
+  printf 'PASS installed strict Snap: %s launch opens a stable visible window\n' "$launch_mode"
+  cleanup_app
+  for ((attempt = 0; attempt < 20; attempt++)); do
+    if ! xdotool getwindowname "$window_id" >/dev/null 2>&1; then break; fi
+    sleep 0.1
+  done
 done
-echo 'FAIL: installed Snap did not open a visible window within 25 seconds' >&2
-exit 1
+if ! grep -q 'Clipboard notifications: XFixes' "$log_file"; then
+  echo 'FAIL: Snap did not subscribe to clipboard change notifications' >&2
+  exit 1
+fi
+if grep -q 'Creating shared memory.*failed' "$log_file"; then
+  echo 'FAIL: shared-memory startup error' >&2
+  exit 1
+fi

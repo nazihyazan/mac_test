@@ -73,6 +73,7 @@ async function smokeTest({ executablePath, snap = false } = {}) {
       (await window.floatingBoard.getWindowState()).pinned !== value, beforePin.pinned);
 
     if (snap) {
+      assert.ok(await app.evaluate(({ app }) => app.commandLine.hasSwitch('disable-dev-shm-usage')));
       assert.equal(await page.evaluate(() => window.floatingBoard.quitAndInstallUpdate()), false);
       assert.ok(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()));
     }
@@ -101,6 +102,21 @@ async function smokeTest({ executablePath, snap = false } = {}) {
     assert.equal(await page.locator('.text-card-editor').first().inputValue(), sample);
     assert.deepEqual(errors, []);
     if (snap) assert.ok(!logs.some(line => /AppImage|checkForUpdatesAndNotify|Failed to check for updates/.test(line)), 'Snap must not invoke the AppImage updater');
+    await require('./board-regression.cjs').boardRegression(app, page);
+    assert.deepEqual(errors, []);
+    await app.close();
+    app = null;
+    ({ page, errors } = await launch());
+    await page.waitForFunction(() => document.querySelectorAll('.text-card').length === 99 && document.querySelectorAll('.media-item').length === 100);
+    await page.waitForTimeout(500);
+    const metrics = await app.evaluate(({ app }) => app.getAppMetrics().map(({ pid, type }) => ({ pid, type })));
+    let proportionalKiB = 0;
+    for (const { pid } of metrics) {
+      const memory = await fs.readFile(`/proc/${pid}/smaps_rollup`, 'utf8');
+      proportionalKiB += Number(memory.match(/^Pss:\s+(\d+)/m)[1]);
+    }
+    console.log(`Fresh restart with 100 images and 99 notes: ${Math.round(proportionalKiB / 1024)} MiB proportional memory across ${metrics.length} application processes`);
+    assert.deepEqual(errors, []);
     console.log(`PASS ${executablePath ? 'packaged app' : 'source'}: visible window, literal clipboard text, copy, persistence, theme, pin, off-screen and invalid-state recovery${snap ? ', snapd-managed updates' : ''}`);
   } catch (error) {
     console.error(logs.join(''));

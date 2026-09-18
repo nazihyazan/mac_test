@@ -1,6 +1,6 @@
 {
   "name": "floatboard",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "A fast and unobtrusive floating clipboard manager for Linux",
   "main": "main.js",
   "scripts": {
@@ -24,7 +24,8 @@
   "type": "commonjs",
   "dependencies": {
     "electron-updater": "^6.1.8",
-    "node-machine-id": "^1.1.12"
+    "node-machine-id": "^1.1.12",
+    "x11": "4.2.1"
   },
   "devDependencies": {
     "electron": "^29.4.6",
@@ -48,7 +49,9 @@
       "upgrade.css",
       "license.js",
       "seo.js",
-      "assets/**/*"
+      "assets/**/*",
+      "clipboard-watcher.js",
+      "media-store.js"
     ],
     "linux": {
       "target": [
