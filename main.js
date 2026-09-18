@@ -1,21 +1,33 @@
 const { app, BrowserWindow, Menu, Tray, globalShortcut, ipcMain, nativeImage, protocol, net, shell, clipboard, screen } = require('electron');
-const { autoUpdater } = require('electron-updater');
+// Snap updates are installed by snapd, not the AppImage updater.
+const autoUpdater = process.env.SNAP ? null : require('electron-updater').autoUpdater;
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
+const { restoreWindowState, DEFAULT_BOUNDS, MIN_BOUNDS } = require('./window-state');
 const { exec } = require('child_process');
-app.commandLine.appendSwitch('disable-backgrounding-occluded-windows', 'true');
-app.commandLine.appendSwitch('disable-renderer-backgrounding', 'true');
-app.commandLine.appendSwitch('disable-background-timer-throttling', 'true');
+// Snap has a private writable /tmp; avoid restricted Chromium /dev/shm names.
+if (process.platform === 'linux' && process.env.SNAP) {
+  app.commandLine.appendSwitch('disable-dev-shm-usage');
+}
+const { startClipboardWatcher, getClipboardWatcherStatus } = require('./clipboard-watcher');
+const { createMediaStore } = require('./media-store');
+const mediaStore = createMediaStore({ directory: getMediaDir, nativeImage });
+let stopClipboardWatcher = () => {};
+let inspectClipboard = () => {};
 
 
 // Auto Updater config
-autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
+if (autoUpdater) {
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+}
 
 // Add updater IPC handlers
 ipcMain.handle('updater:quit-and-install', () => {
+  if (!autoUpdater) return false;
   autoUpdater.quitAndInstall();
+  return true;
 });
 
 const { pathToFileURL } = require('url');
@@ -99,8 +111,6 @@ async function verifyWithKeygen(email, key) {
 }
 
 const APP_NAME = 'FloatBoard';
-const DEFAULT_BOUNDS = { width: 460, height: 460 };
-const MIN_BOUNDS = { width: 320, height: 280 };
 
 let mainWindow = null;
 let tray = null;
@@ -154,13 +164,11 @@ async function writeJsonAtomic(filePath, data) {
 function loadWindowState() {
   const state = readJsonSync(getWindowStatePath(), {});
 
-  return {
-    x: Number.isFinite(state.x) ? state.x : undefined,
-    y: Number.isFinite(state.y) ? state.y : undefined,
-    width: Math.max(Number(state.width) || DEFAULT_BOUNDS.width, MIN_BOUNDS.width),
-    height: Math.max(Number(state.height) || DEFAULT_BOUNDS.height, MIN_BOUNDS.height),
-    alwaysOnTop: state.alwaysOnTop !== false
-  };
+  return restoreWindowState(
+    state,
+    screen.getAllDisplays().map(display => display.workArea),
+    screen.getPrimaryDisplay().workArea
+  );
 }
 
 function saveWindowStateSoon() {
@@ -311,8 +319,8 @@ function createWindow() {
     y: state.y,
     width: state.width,
     height: state.height,
-    minWidth: MIN_BOUNDS.width,
-    minHeight: MIN_BOUNDS.height,
+    minWidth: Math.min(MIN_BOUNDS.width, state.width),
+    minHeight: Math.min(MIN_BOUNDS.height, state.height),
     title: APP_NAME,
     icon: getIconPath(),
     frame: false,
@@ -331,7 +339,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
-      backgroundThrottling: false
+      backgroundThrottling: true
     }
   });
 
@@ -402,6 +410,9 @@ function createWindow() {
     menu.popup({ window: mainWindow });
   });
 
+  mainWindow.on('focus', () => {
+    if (getClipboardWatcherStatus() !== 'xfixes') inspectClipboard();
+  });
   mainWindow.on('move', saveWindowStateSoon);
   mainWindow.on('resize', () => {
     saveWindowStateSoon();
@@ -474,7 +485,7 @@ function normalizeBoardForRenderer(board) {
             const mediaPath = path.join(getMediaDir(), item.fileName);
             return {
               ...item,
-              src: `app-media://${item.fileName}`,
+              src: mediaStore.mediaUrl(item.fileName),
               exists: fs.existsSync(mediaPath)
             };
           }
@@ -488,31 +499,6 @@ function normalizeBoardForRenderer(board) {
   }
 
   return normalized;
-}
-
-function sanitizeFileName(name) {
-  const parsed = path.parse(name || 'media');
-  const base = parsed.name
-    .replace(/[^a-z0-9._-]+/gi, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 80) || 'media';
-
-  return `${base}${parsed.ext || ''}`;
-}
-
-function getExtensionForMedia(kind, mime, originalName) {
-  const originalExt = path.extname(originalName || '');
-  if (originalExt) return originalExt;
-
-  if (mime === 'image/png') return '.png';
-  if (mime === 'image/jpeg') return '.jpg';
-  if (mime === 'image/gif') return '.gif';
-  if (mime === 'image/webp') return '.webp';
-  if (mime === 'video/mp4') return '.mp4';
-  if (mime === 'video/webm') return '.webm';
-  if (mime === 'video/quicktime') return '.mov';
-
-  return kind === 'video' ? '.mp4' : '.bin';
 }
 
 function getMediaKindFromMime(mime) {
@@ -619,9 +605,27 @@ ipcMain.on('window:set-bounds', (_event, bounds) => {
 ipcMain.handle('board:load', async () => {
   await fsp.mkdir(getMediaDir(), { recursive: true });
   const board = readJsonSync(getBoardPath(), { version: 1, sections: [] });
-  return normalizeBoardForRenderer(board);
+  const normalized = normalizeBoardForRenderer(board);
+  for (const section of normalized.sections) {
+    if (section.type !== 'image') continue;
+    for (const item of section.items) {
+      if (item.thumbnail && item.contentHash) {
+        item.previewSrc = mediaStore.mediaUrl(item.thumbnail);
+        continue;
+      }
+      if (item.storage !== 'file' || !item.fileName || item.exists === false) continue;
+      try {
+        const prepared = await mediaStore.prepareFile(item.fileName, item.name);
+        item.contentHash = prepared.contentHash;
+        item.thumbnail = prepared.thumbnail;
+        item.previewSrc = prepared.previewSrc;
+      } catch (error) { console.warn('Could not prepare image preview:', error.message); }
+    }
+  }
+  return normalized;
 });
 
+let boardWrites = Promise.resolve();
 ipcMain.handle('board:save', async (_event, data) => {
   const safeData = {
     version: 1,
@@ -629,7 +633,9 @@ ipcMain.handle('board:save', async (_event, data) => {
     sections: Array.isArray(data && data.sections) ? data.sections : []
   };
 
-  await writeJsonAtomic(getBoardPath(), safeData);
+  const write = boardWrites.then(() => writeJsonAtomic(getBoardPath(), safeData));
+  boardWrites = write.catch(() => {});
+  await write;
   return true;
 });
 
@@ -700,29 +706,10 @@ ipcMain.handle('media:import', async (_event, payload) => {
     throw new Error('Media source is not a file.');
   }
 
-  await fsp.mkdir(getMediaDir(), { recursive: true });
-
-  const kind = payload.kind === 'video' ? 'video' : 'image';
-  const originalName = payload.name || path.basename(sourcePath);
-  const extension = getExtensionForMedia(kind, payload.mime, originalName);
-  const safeName = sanitizeFileName(originalName.replace(path.extname(originalName), extension));
-  const id = crypto.randomUUID();
-  const fileName = `${Date.now()}-${id}-${safeName}`;
-  const destination = path.join(getMediaDir(), fileName);
-
-  await fsp.copyFile(sourcePath, destination);
-
-  return {
-    id,
-    kind,
-    name: originalName,
-    mime: payload.mime || '',
-    size: stat.size,
-    storage: 'file',
-    fileName,
-    src: `app-media://media/${fileName}`,
-    createdAt: new Date().toISOString()
-  };
+  return mediaStore.saveFile(sourcePath, {
+    kind: payload.kind === 'video' ? 'video' : 'image',
+    name: payload.name || path.basename(sourcePath), mime: payload.mime || ''
+  });
 });
 
 ipcMain.handle('media:import-url', async (_event, payload) => {
@@ -763,45 +750,15 @@ ipcMain.handle('media:import-url', async (_event, payload) => {
     throw new Error(`Dropped URL returned unsupported content type: ${mime}`);
   }
   
-  const extension = getExtensionForMedia(actualKind, mime, rawName);
-  const baseName = rawName.includes('.') ? rawName.slice(0, rawName.lastIndexOf('.')) : rawName;
-  const safeName = sanitizeFileName(baseName + extension);
-  const id = crypto.randomUUID();
-  const fileName = `${Date.now()}-${id}-${safeName}`;
-  const destination = path.join(getMediaDir(), fileName);
-
-  await fsp.mkdir(getMediaDir(), { recursive: true });
-  await fsp.writeFile(destination, buffer);
-
-  return {
-    id,
-    kind: actualKind,
-    name: rawName,
-    mime,
-    size: buffer.length,
-    storage: 'file',
-    fileName,
-    src: `app-media://media/${fileName}`,
-    createdAt: new Date().toISOString()
-  };
+  return mediaStore.saveBuffer(buffer, { kind: actualKind, name: rawName, mime });
 });
 
-ipcMain.handle('media:save-blob', async (event, arrayBuffer) => {
-  try {
-    const ext = '.png';
-    const id = crypto.randomUUID();
-    const fileName = `${Date.now()}-${id}${ext}`;
-    const destination = path.join(getMediaDir(), fileName);
-    
-    // We receive an ArrayBuffer from the renderer, convert to Buffer
-    const buffer = Buffer.from(arrayBuffer);
-    await fsp.mkdir(getMediaDir(), { recursive: true });
-    await fsp.writeFile(destination, buffer);
-    return `app-media://media/${fileName}`;
-  } catch (err) {
-    console.error('Failed to save blob:', err);
-    return null;
-  }
+ipcMain.handle('media:save-blob', async (_event, arrayBuffer) => {
+  return mediaStore.saveImage(Buffer.from(arrayBuffer));
+});
+
+ipcMain.handle('media:save-buffer', async (_event, payload) => {
+  return mediaStore.saveBuffer(Buffer.from(payload.data), payload);
 });
 
 const takeScreenshot = () => {
@@ -839,16 +796,16 @@ app.whenReady().then(() => {
     app.setDesktopName('floatboard.desktop');
   }
 
-  // Check for updates
-  autoUpdater.checkForUpdatesAndNotify().catch(err => {
-    console.error('Failed to check for updates:', err);
-  });
-  
-  autoUpdater.on('update-downloaded', (info) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('updater:update-downloaded', info);
-    }
-  });
+  if (autoUpdater) {
+    autoUpdater.on('update-downloaded', (info) => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('updater:update-downloaded', info);
+      }
+    });
+    autoUpdater.checkForUpdatesAndNotify().catch(err => {
+      console.error('Failed to check for updates:', err);
+    });
+  }
 
   // Register custom app-media protocol to load local files safely without webSecurity blocks
   protocol.handle('app-media', async (request) => {
@@ -895,75 +852,52 @@ app.whenReady().then(() => {
   createWindow();
   createTray();
   
-  // Clipboard History Polling
+  // XFixes sends notifications when clipboard ownership changes. No idle polling.
   const clipHistory = [];
   let lastText = '';
   let lastImageHash = '';
-  let ignoreNextClipboardImage = false;
-  
-  ipcMain.on('clipboard:ignore-next', () => {
-    ignoreNextClipboardImage = true;
-  });
-
-
-
-  setInterval(() => {
-    const text = clipboard.readText();
-    if (text && text !== lastText) {
-      lastText = text;
-      // Push new text to history, remove duplicates, keep top 10
-      const existingIdx = clipHistory.findIndex(item => item.type === 'text' && item.content === text);
-      if (existingIdx !== -1) clipHistory.splice(existingIdx, 1);
-      clipHistory.unshift({ type: 'text', content: text, timestamp: Date.now() });
-      if (clipHistory.length > 10) clipHistory.pop();
-    }
-
-    // Auto-import clipboard images as screenshots
-    const formats = clipboard.availableFormats();
-    if (formats.some(f => f.startsWith('image/'))) {
-      const img = clipboard.readImage();
-      if (img && !img.isEmpty()) {
-        const size = img.getSize();
-        const bitmap = img.getBitmap();
-        
-        // Fast hash to prevent running toPNG() every second:
-        // Use dimensions, bitmap length, and a small sample of pixels
-        const sampleSize = Math.min(1000, bitmap.length);
-        const sample = bitmap.subarray(0, sampleSize);
-        const fastHash = `${size.width}x${size.height}_${bitmap.length}_` + crypto.createHash('md5').update(sample).digest('hex');
-        
-        if (fastHash !== lastImageHash) {
-          lastImageHash = fastHash;
-          
-          if (ignoreNextClipboardImage) {
-            ignoreNextClipboardImage = false;
-            return;
+  let clipboardBusy = false;
+  let clipboardPending = false;
+  inspectClipboard = async () => {
+    if (clipboardBusy) { clipboardPending = true; return; }
+    clipboardBusy = true;
+    try {
+      do {
+        clipboardPending = false;
+        const formats = clipboard.availableFormats();
+        const text = clipboard.readText();
+        if (text && text !== lastText) {
+          lastText = text;
+          const existingIdx = clipHistory.findIndex(item => item.content === text);
+          if (existingIdx !== -1) clipHistory.splice(existingIdx, 1);
+          clipHistory.unshift({ type: 'text', content: text, timestamp: Date.now() });
+          // Bound retained clipboard history, including very large text selections.
+          let bytes = 0;
+          while (clipHistory.length > 10) clipHistory.pop();
+          for (let i = 0; i < clipHistory.length; i++) {
+            bytes += Buffer.byteLength(clipHistory[i].content);
+            if (bytes > 4 * 1024 * 1024) { clipHistory.splice(i); break; }
           }
-          
-          const imgBuffer = img.toPNG();
-          const fileName = `${Date.now()}-${crypto.randomUUID()}.png`;
-          const dest = path.join(getMediaDir(), fileName);
-          fsp.mkdir(getMediaDir(), { recursive: true }).then(() => {
-            return fsp.writeFile(dest, imgBuffer);
-          }).then(() => {
-            if (mainWindow && !mainWindow.isDestroyed()) {
-               mainWindow.webContents.send('media:auto-added', {
-                 id: crypto.randomUUID(),
-                 kind: 'image',
-                 name: `Screenshot_${Date.now()}.png`,
-                 mime: 'image/png',
-                 size: imgBuffer.length,
-                 storage: 'file',
-                 fileName,
-                 src: `app-media://media/${fileName}`,
-                 createdAt: new Date().toISOString()
-               });
-            }
-          }).catch(err => console.error('Failed to auto-save clipboard image:', err));
         }
-      }
+        if (!text) lastText = '';
+        if (!formats.some(format => format.startsWith('image/'))) {
+          lastImageHash = '';
+          continue;
+        }
+        const image = clipboard.readImage();
+        if (image.isEmpty()) continue;
+        const item = await mediaStore.saveImage(image);
+        if (item.contentHash === lastImageHash) continue;
+        lastImageHash = item.contentHash;
+        if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('media:auto-added', item);
+      } while (clipboardPending);
+    } catch (error) {
+      console.error('Could not read changed clipboard:', error);
+    } finally {
+      clipboardBusy = false;
     }
-  }, 1000);
+  };
+  stopClipboardWatcher = startClipboardWatcher({ app, onChange: inspectClipboard });
 
   const showHistory = () => {
     if (mainWindow) {
@@ -971,7 +905,7 @@ app.whenReady().then(() => {
       mainWindow.webContents.send('history:show', clipHistory);
     }
   };
-
+  ipcMain.on('history:request', showHistory);
   globalShortcut.register('CommandOrControl+Shift+V', showHistory);
 
   globalShortcut.register('CommandOrControl+Shift+S', takeScreenshot);
@@ -985,6 +919,7 @@ app.on('before-quit', () => {
 });
 
 app.on('will-quit', () => {
+  stopClipboardWatcher();
   globalShortcut.unregisterAll();
 });
 

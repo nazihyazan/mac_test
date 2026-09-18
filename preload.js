@@ -28,7 +28,7 @@ contextBridge.exposeInMainWorld('floatingBoard', {
   changeTheme: (theme) => ipcRenderer.send('theme:change', theme),
 
   saveBlob: (buffer) => ipcRenderer.invoke('media:save-blob', buffer),
-  ignoreNextClipboardImage: () => ipcRenderer.send('clipboard:ignore-next'),
+  saveMediaBuffer: (payload) => ipcRenderer.invoke('media:save-buffer', payload),
 
   loadBoard: () => ipcRenderer.invoke('board:load'),
   saveBoard: (data) => ipcRenderer.invoke('board:save', data),

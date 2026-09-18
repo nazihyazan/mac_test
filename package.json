@@ -1,12 +1,16 @@
 {
   "name": "floatboard",
-  "version": "1.0.15",
+  "version": "1.0.17",
   "description": "A fast and unobtrusive floating clipboard manager for Linux",
   "main": "main.js",
   "scripts": {
     "start": "env -u ELECTRON_RUN_AS_NODE electron .",
     "dev": "env -u ELECTRON_RUN_AS_NODE electron .",
-    "build:linux": "electron-builder --linux --publish never -c.directories.output=dist/linux"
+    "build:linux": "electron-builder --linux --publish never -c.directories.output=dist/linux",
+    "build:snap": "electron-builder --linux snap --publish never -c.directories.output=dist/linux",
+    "test": "node --test test/*.test.cjs",
+    "test:smoke": "node scripts/smoke-test.cjs",
+    "test:snap": "node scripts/check-snap.cjs"
   },
   "keywords": [
     "clipboard",
@@ -20,7 +24,8 @@
   "type": "commonjs",
   "dependencies": {
     "electron-updater": "^6.1.8",
-    "node-machine-id": "^1.1.12"
+    "node-machine-id": "^1.1.12",
+    "x11": "4.2.1"
   },
   "devDependencies": {
     "electron": "^29.4.6",
@@ -36,6 +41,7 @@
     },
     "files": [
       "main.js",
+      "window-state.js",
       "preload.js",
       "index.html",
       "renderer.js",
@@ -43,7 +49,9 @@
       "upgrade.css",
       "license.js",
       "seo.js",
-      "assets/**/*"
+      "assets/**/*",
+      "clipboard-watcher.js",
+      "media-store.js"
     ],
     "linux": {
       "target": [
@@ -62,8 +70,21 @@
     "snap": {
       "summary": "Floating clipboard manager",
       "description": "FloatBoard is a productivity-focused, floating clipboard manager that allows you to easily store, organize, and paste your clipboard history directly from a clean, unobtrusive floating overlay. Designed for speed and efficiency.",
-      "confinement": "classic",
-      "grade": "stable"
+      "confinement": "strict",
+      "grade": "stable",
+      "plugs": [
+        "desktop",
+        "desktop-legacy",
+        "home",
+        "x11",
+        "wayland",
+        "unity7",
+        "browser-support",
+        "network",
+        "gsettings",
+        "audio-playback",
+        "opengl"
+      ]
     }
   }
 }

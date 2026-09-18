@@ -3,19 +3,8 @@ const api = window.floatingBoard;
 // Instant theme application on load to prevent flashing
 document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
 
-// Initialize linux window controls
 const linuxControls = document.getElementById('linux-window-controls');
 if (linuxControls) linuxControls.style.display = 'flex';
-
-document.getElementById('minimize-btn')?.addEventListener('click', () => {
-  api.minimize();
-});
-document.getElementById('maximize-btn')?.addEventListener('click', () => {
-  api.toggleMaximize();
-});
-document.getElementById('close-btn')?.addEventListener('click', () => {
-  api.close();
-});
 
 const TYPE_META = {
   text: {
@@ -110,6 +99,8 @@ let snowAnimationId = null;
 let snowflakes = [];
 let historyItems = [];
 let isLicenseModalOpen = false;
+let boardReady = false;
+let pendingClipboardImage = null;
 try {
   historyItems = JSON.parse(localStorage.getItem('board_history')) || [];
 } catch (_) {
@@ -401,6 +392,8 @@ function cleanBoardForSave() {
           storage: item.storage || 'inline',
           fileName: item.storage === 'file' ? item.fileName : undefined,
           src: item.storage === 'file' ? undefined : item.src,
+          contentHash: item.contentHash,
+          thumbnail: item.thumbnail,
           createdAt: item.createdAt || now()
         }));
 
@@ -480,30 +473,69 @@ function normalizeLoadedBoard(data) {
   return next;
 }
 
+// Keep only previews close to the viewport decoded. Originals are opened on demand.
+const mediaObserver = new IntersectionObserver(entries => {
+  for (const { target, isIntersecting } of entries) {
+    if (isIntersecting && !target.hasAttribute('src')) target.src = target.dataset.source;
+    else if (!isIntersecting && target.hasAttribute('src')) {
+      if (target.tagName === 'VIDEO') target.pause();
+      target.removeAttribute('src');
+      if (target.tagName === 'VIDEO') target.load();
+    }
+  }
+}, { rootMargin: '200px' });
+
+function disposeCard(element) {
+  for (const media of element.querySelectorAll('img, video')) {
+    mediaObserver.unobserve(media);
+    if (media.tagName === 'VIDEO') media.pause();
+    media.removeAttribute('src');
+  }
+  element.remove();
+}
+
+function reconcileCards(container, section) {
+  const scrollTop = container.scrollTop;
+  const existing = new Map(Array.from(container.children, card => [card.dataset.id, card]));
+  const wanted = new Set(section.items.map(item => item.id));
+  for (const [id, card] of existing) if (!wanted.has(id)) disposeCard(card);
+  section.items.forEach((item, index) => {
+    let card = existing.get(item.id);
+    if (!card) card = section.type === 'text' ? renderTextCard(item, section) : renderMediaCard(item, section);
+    if (container.children[index] !== card) container.insertBefore(card, container.children[index] || null);
+  });
+  if (section.type !== 'text') container.classList.toggle('single', section.items.length === 1);
+  container.scrollTop = scrollTop;
+}
+
 function render(options = {}) {
   if (options.focusText) pendingTextFocus = true;
-
   const visibleSections = getVisibleSections();
   const count = visibleSections.length;
-
   sectionsEl.dataset.count = String(count);
   sectionsEl.style.setProperty('--section-count', String(Math.max(count, 1)));
   emptyStateEl.hidden = count > 0;
   emptyStateEl.classList.toggle('is-hidden', count > 0);
   emptyStateEl.setAttribute('aria-hidden', String(count > 0));
-  sectionsEl.innerHTML = '';
-
-  const fragment = document.createDocumentFragment();
-  for (const section of visibleSections) {
-    fragment.appendChild(renderSection(section));
+  const wanted = new Set(visibleSections.map(section => section.type));
+  for (const element of Array.from(sectionsEl.children)) {
+    if (!wanted.has(element.dataset.type)) disposeCard(element);
   }
-  sectionsEl.appendChild(fragment);
-
+  visibleSections.forEach((section, index) => {
+    let element = Array.from(sectionsEl.children).find(el => el.dataset.type === section.type);
+    if (!element) element = renderSection(section);
+    else {
+      element.querySelector('.section-title').textContent = `${TYPE_META[section.type].title} ${section.items.length}`;
+      const container = element.querySelector('.text-list-container, .media-grid');
+      if (container) reconcileCards(container, section);
+    }
+    if (sectionsEl.children[index] !== element) sectionsEl.insertBefore(element, sectionsEl.children[index] || null);
+  });
   if (pendingTextFocus) {
     requestAnimationFrame(() => {
       const editors = sectionsEl.querySelectorAll('.text-card-editor');
-      if (editors.length > 0) {
-        const lastEditor = editors[editors.length - 1];
+      const lastEditor = editors[editors.length - 1];
+      if (lastEditor) {
         lastEditor.focus();
         lastEditor.selectionStart = lastEditor.selectionEnd = lastEditor.value.length;
       }
@@ -546,6 +578,9 @@ function renderSection(section) {
           name: item.name,
           storage: item.storage,
           fileName: item.fileName,
+          contentHash: item.contentHash,
+          thumbnail: item.thumbnail,
+          previewSrc: item.previewSrc,
           mime: item.mime,
           createdAt: item.createdAt || now()
         });
@@ -598,6 +633,21 @@ function formatTime(isoString) {
   }
 }
 
+const pendingEditorSizes = new Set();
+let editorResizeFrame = null;
+function queueEditorResize(editor) {
+  pendingEditorSizes.add(editor);
+  if (editorResizeFrame !== null) return;
+  editorResizeFrame = requestAnimationFrame(() => {
+    editorResizeFrame = null;
+    const editors = [...pendingEditorSizes].filter(editor => editor.isConnected);
+    pendingEditorSizes.clear();
+    for (const editor of editors) editor.style.height = 'auto';
+    const heights = editors.map(editor => Math.min(editor.scrollHeight, 320));
+    editors.forEach((editor, index) => { editor.style.height = `${heights[index]}px`; });
+  });
+}
+
 function renderTextCard(item, section) {
   const card = document.createElement('div');
   card.className = 'text-card';
@@ -622,18 +672,19 @@ function renderTextCard(item, section) {
       </div>
     </div>
     <div class="text-card-body">
-      <textarea class="text-card-editor" placeholder="Text">${item.text}</textarea>
+      <textarea class="text-card-editor" placeholder="Text"></textarea>
     </div>
   `;
 
   const textarea = card.querySelector('.text-card-editor');
+  // Clipboard contents are plain text, including strings such as </textarea>.
+  textarea.value = item.text;
 
   function autoResize() {
-    textarea.style.height = 'auto';
-    textarea.style.height = `${textarea.scrollHeight}px`;
+    queueEditorResize(textarea);
   }
 
-  setTimeout(autoResize, 0);
+  queueEditorResize(textarea);
 
   textarea.addEventListener('input', () => {
     item.text = textarea.value;
@@ -705,28 +756,29 @@ function renderTextEditor(section) {
   return container;
 }
 
-function renderMediaGrid(section) {
-  const grid = document.createElement('div');
-  grid.className = `media-grid ${section.items.length === 1 ? 'single' : ''}`;
-
-  for (const item of section.items) {
+function renderMediaCard(item, section) {
     const mediaItem = document.createElement('article');
     mediaItem.className = 'media-item';
+    mediaItem.dataset.id = item.id;
     mediaItem.title = item.name || TYPE_META[section.type].title;
 
     if (item.exists === false) {
       mediaItem.innerHTML = '<div class="missing-media">Missing file</div>';
     } else if (section.type === 'image') {
       const img = document.createElement('img');
-      img.src = item.src;
+      img.dataset.source = item.previewSrc || item.src;
+      img.dataset.originalSrc = item.src;
+      img.decoding = 'async';
+      mediaObserver.observe(img);
       img.alt = item.name || 'Image';
       mediaItem.appendChild(img);
     } else {
       const video = document.createElement('video');
-      video.src = item.src;
+      video.dataset.source = item.src;
+      mediaObserver.observe(video);
       video.controls = true;
       video.playsInline = true;
-      video.preload = 'metadata';
+      video.preload = 'none';
       mediaItem.appendChild(video);
     }
 
@@ -742,7 +794,10 @@ function renderMediaGrid(section) {
         src: item.src, 
         name: item.name, 
         storage: item.storage, 
-        fileName: item.fileName, 
+        fileName: item.fileName,
+        contentHash: item.contentHash,
+        thumbnail: item.thumbnail,
+        previewSrc: item.previewSrc,
         createdAt: item.createdAt || now() 
       });
       section.items = section.items.filter((candidate) => candidate.id !== item.id);
@@ -777,39 +832,58 @@ function renderMediaGrid(section) {
       mediaItem.appendChild(copyButton);
     }
 
-    grid.appendChild(mediaItem);
-  }
+    return mediaItem;
+}
 
+function renderMediaGrid(section) {
+  const grid = document.createElement('div');
+  grid.className = `media-grid ${section.items.length === 1 ? 'single' : ''}`;
+  for (const item of section.items) grid.appendChild(renderMediaCard(item, section));
   return grid;
 }
 
-async function addText(text) {
-  if (!text) return;
-  
-  const allowed = await checkDailyLimit('text');
-  if (!allowed) return;
-
-  const section = ensureSection('text');
-  if (!section.items) {
-    section.items = [];
-  }
-  section.items.push({
-    id: createId(),
-    text: text,
-    createdAt: now()
-  });
-  section.updatedAt = now();
-  activeType = 'text';
-  render({ focusText: true });
-  queueSave();
+let insertionQueue = Promise.resolve();
+function enqueueInsertion(task) {
+  const result = insertionQueue.then(task);
+  insertionQueue = result.catch(error => console.error(error));
+  return result;
 }
 
-function readAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener('load', () => resolve(reader.result));
-    reader.addEventListener('error', () => reject(reader.error));
-    reader.readAsDataURL(file);
+function isDuplicate(kind, item) {
+  return (state.sections.find(section => section.type === kind)?.items || []).some(existing => {
+    if (kind === 'text') return existing.text === item.text;
+    if (existing.contentHash && item.contentHash) return existing.contentHash === item.contentHash;
+    return (existing.fileName && existing.fileName === item.fileName) || (existing.src && existing.src === item.src);
+  });
+}
+
+function addText(text) {
+  if (!text) return Promise.resolve(false);
+  return enqueueInsertion(async () => {
+    if (isDuplicate('text', { text })) { showToast('Already on your board'); return false; }
+    if (!await checkDailyLimit('text')) return false;
+    const section = ensureSection('text');
+    section.items.push({ id: createId(), text, createdAt: now() });
+    section.updatedAt = now();
+    activeType = 'text';
+    render({ focusText: true });
+    queueSave();
+    return true;
+  });
+}
+
+function insertMedia(item) {
+  return enqueueInsertion(async () => {
+    const kind = item.kind || 'image';
+    if (isDuplicate(kind, item)) return false;
+    if (!await checkDailyLimit(kind)) return false;
+    const section = ensureSection(kind);
+    section.items.push(item);
+    section.updatedAt = now();
+    activeType = kind;
+    render();
+    queueSave();
+    return true;
   });
 }
 
@@ -833,16 +907,7 @@ async function createMediaItem(file, kind) {
     throw new Error('Large media needs to be dropped from a local file.');
   }
 
-  return {
-    id: createId(),
-    kind,
-    name: file.name || `${kind}-${Date.now()}`,
-    mime: file.type || '',
-    size: file.size || 0,
-    storage: 'inline',
-    src: await readAsDataUrl(file),
-    createdAt: now()
-  };
+  return api.saveMediaBuffer({ data: await file.arrayBuffer(), kind, name: file.name, mime: file.type });
 }
 
 async function flattenImageToItem(src, originalName) {
@@ -864,20 +929,12 @@ async function flattenImageToItem(src, originalName) {
         canvas.toBlob(async (blob) => {
           if (!blob) return reject(new Error('Failed to create blob'));
           const buffer = await blob.arrayBuffer();
-          const savedSrc = await api.saveBlob(buffer);
-          if (!savedSrc) return reject(new Error('Failed to save flattened image'));
-          
-          resolve({
-            id: crypto.randomUUID(),
-            kind: 'image',
-            name: originalName,
-            mime: 'image/png',
-            size: blob.size,
-            storage: 'file',
-            fileName: savedSrc.split('/').pop(),
-            src: savedSrc,
-            createdAt: now()
-          });
+          try {
+            const item = await api.saveBlob(buffer);
+            item.name = originalName;
+            resolve(item);
+          } catch (error) { reject(error); }
+          finally { canvas.width = canvas.height = 0; img.src = ''; }
         }, 'image/png', 1.0);
       } catch (err) {
         reject(err);
@@ -891,32 +948,14 @@ async function flattenImageToItem(src, originalName) {
 async function addFile(file) {
   const kind = getKind(file);
   if (!kind) return false;
-
-  const allowed = await checkDailyLimit(kind);
-  if (!allowed) {
-    return false;
-  }
-
   try {
-    const section = ensureSection(kind);
     let item;
     if (kind === 'image') {
       const tempSrc = URL.createObjectURL(file);
-      let fileName = file.name;
-      if (!fileName || fileName.toLowerCase() === 'image.png' || fileName.toLowerCase() === 'screenshot.png') {
-        fileName = `Screenshot ${new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').replace(/:/g, '-')}.png`;
-      }
-      item = await flattenImageToItem(tempSrc, fileName);
-      URL.revokeObjectURL(tempSrc);
-    } else {
-      item = await createMediaItem(file, kind);
-    }
-    section.items.push(item);
-    section.updatedAt = now();
-    activeType = kind;
-    render();
-    queueSave();
-    return true;
+      try { item = await flattenImageToItem(tempSrc, file.name); }
+      finally { URL.revokeObjectURL(tempSrc); }
+    } else item = await createMediaItem(file, kind);
+    return await insertMedia(item);
   } catch (error) {
     console.error(error);
     showToast(error.message || 'Media import failed');
@@ -935,28 +974,10 @@ async function addFiles(files) {
 }
 
 async function addMediaFromUrl(url, kind) {
-  const allowed = await checkDailyLimit(kind);
-  if (!allowed) {
-    return false;
-  }
   try {
-    // Note: The main process downloads the file and returns a saved app-media:// path
     let item = await api.importMediaUrl({ url, kind });
-    
-    // WYSIWYG Image Flattening: if it's an image, draw it to a canvas and save the flattened version
-    if (kind === 'image') {
-      const flattenedItem = await flattenImageToItem(item.src, item.name);
-      // We overwrite the imported item with the flattened item
-      item = flattenedItem;
-    }
-    
-    const section = ensureSection(item.kind);
-    section.items.push(item);
-    section.updatedAt = now();
-    activeType = item.kind;
-    render();
-    queueSave();
-    return true;
+    if (item.kind === 'image') item = await flattenImageToItem(item.src, item.name);
+    return await insertMedia(item);
   } catch (error) {
     console.error(error);
     showToast(`Could not import web ${kind === 'video' ? 'video' : 'image'}`);
@@ -1018,51 +1039,6 @@ boardEl.addEventListener('click', (event) => {
   }
 });
 
-function shouldIgnoreMove(target) {
-  return Boolean(target.closest('button, textarea, input, video, .resize-grip, .chrome-bar'));
-}
-
-let moveState = null;
-
-boardEl.addEventListener('pointerdown', async (event) => {
-  if (event.button !== 0 || shouldIgnoreMove(event.target)) return;
-
-  moveState = {
-    pointerId: event.pointerId,
-    startX: event.screenX,
-    startY: event.screenY,
-    bounds: await api.getWindowBounds(),
-    moving: false
-  };
-
-  boardEl.setPointerCapture(event.pointerId);
-});
-
-boardEl.addEventListener('pointermove', (event) => {
-  if (!moveState || moveState.pointerId !== event.pointerId) return;
-
-  const dx = event.screenX - moveState.startX;
-  const dy = event.screenY - moveState.startY;
-  if (!moveState.moving && Math.hypot(dx, dy) < 4) return;
-
-  moveState.moving = true;
-  api.setWindowBounds({
-    ...moveState.bounds,
-    x: moveState.bounds.x + dx,
-    y: moveState.bounds.y + dy
-  });
-});
-
-boardEl.addEventListener('pointerup', (event) => {
-  if (!moveState || moveState.pointerId !== event.pointerId) return;
-  boardEl.releasePointerCapture(event.pointerId);
-  moveState = null;
-});
-
-boardEl.addEventListener('pointercancel', () => {
-  moveState = null;
-});
-
 let resizeState = null;
 
 resizeGripEl.addEventListener('pointerdown', async (event) => {
@@ -1122,6 +1098,7 @@ function restoreHistoryItem(id) {
   const itemIndex = historyItems.findIndex(i => i.id === id);
   if (itemIndex === -1) return;
   const histItem = historyItems[itemIndex];
+  if (isDuplicate(histItem.type, histItem)) { showToast('Already on your board'); return; }
   
   // Remove from history
   historyItems.splice(itemIndex, 1);
@@ -1143,6 +1120,9 @@ function restoreHistoryItem(id) {
     newItem.storage = histItem.storage;
     newItem.fileName = histItem.fileName;
     newItem.mime = histItem.mime;
+    newItem.contentHash = histItem.contentHash;
+    newItem.thumbnail = histItem.thumbnail;
+    newItem.previewSrc = histItem.previewSrc;
   }
 
   section.items.push(newItem);
@@ -1471,6 +1451,12 @@ async function init() {
   initSnow();
 
   render();
+  boardReady = true;
+  if (pendingClipboardImage) {
+    const image = pendingClipboardImage;
+    pendingClipboardImage = null;
+    await insertMedia(image);
+  }
   boardEl.focus();
   
   updateUsageBadge();
@@ -1640,7 +1626,7 @@ document.addEventListener('keydown', (e) => {
   
   if ((e.code === 'Space' || (e.ctrlKey && e.key.toLowerCase() === 'z')) && hoveredImg && previewOverlay.style.display !== 'flex') {
     e.preventDefault();
-    openImagePreview(hoveredImg.src);
+    openImagePreview(hoveredImg.dataset.originalSrc || hoveredImg.src);
   }
 });
 
@@ -1679,14 +1665,14 @@ function updatePreviewTransform() {
 // Global listeners for triggering preview
 sectionsEl.addEventListener('dblclick', (e) => {
   if (e.target.tagName === 'IMG') {
-    openImagePreview(e.target.src);
+    openImagePreview(e.target.dataset.originalSrc || e.target.src);
   }
 });
 
 sectionsEl.addEventListener('auxclick', (e) => {
   if (e.target.tagName === 'IMG' && e.button === 1) { // Middle click
     e.preventDefault();
-    openImagePreview(e.target.src);
+    openImagePreview(e.target.dataset.originalSrc || e.target.src);
   }
 });
 
@@ -1733,6 +1719,12 @@ previewOverlay.addEventListener('wheel', (e) => {
 
 async function captureImageToClipboard(displayImg) {
   try {
+    if (displayImg.dataset.originalSrc) {
+      const original = new Image();
+      original.src = displayImg.dataset.originalSrc;
+      await original.decode();
+      displayImg = original;
+    }
     const canvas = document.createElement('canvas');
     
     // Use the exact natural dimensions of the image to ensure 100% original quality
@@ -1748,7 +1740,6 @@ async function captureImageToClipboard(displayImg) {
         return;
       }
       try {
-        api.ignoreNextClipboardImage();
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': pngBlob })
         ]);
@@ -1756,7 +1747,7 @@ async function captureImageToClipboard(displayImg) {
       } catch (err) {
         console.error(err);
         showToast('Failed to copy screenshot');
-      }
+      } finally { canvas.width = canvas.height = 0; }
     }, 'image/png');
   } catch (err) {
     console.error(err);
@@ -1870,18 +1861,10 @@ document.addEventListener('click', (event) => {
   }
 });
 
-api.onMediaAutoAdded(async (item) => {
+api.onMediaAutoAdded(async item => {
   if (isLicenseModalOpen) return;
-  const kind = item.kind || 'image';
-  const allowed = await checkDailyLimit(kind);
-  if (!allowed) return;
-  
-  const section = ensureSection(kind);
-  section.items.push(item);
-  section.updatedAt = now();
-  activeType = kind;
-  render();
-  queueSave();
+  if (!boardReady) { pendingClipboardImage = item; return; }
+  await insertMedia(item);
 });
 
 api.onHistoryShow((clipHistory) => {
@@ -1937,9 +1920,7 @@ document.addEventListener('mouseup', () => {
 document.body.addEventListener('mouseenter', () => {
   if (!document.hasFocus() && api.focus) api.focus();
 });
-document.body.addEventListener('mousemove', () => {
-  if (!document.hasFocus() && api.focus) api.focus();
-});
+
 
 // --- Drag and Drop Reordering ---
 let dragItemId = null;
