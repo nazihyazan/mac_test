@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=FloatBoard
+Comment=Floating notes and clipboard manager
+Exec=floatboard %U
+Terminal=false
+Type=Application
+Icon=floatboard
+StartupWMClass=FloatBoard
+Categories=Utility;

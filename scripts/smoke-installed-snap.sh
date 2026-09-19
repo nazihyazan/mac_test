@@ -25,6 +25,7 @@ cleanup() {
 trap cleanup EXIT
 
 for launch_mode in desktop terminal; do
+  launch_started_ms=$(date +%s%3N)
   if [[ "$launch_mode" == desktop ]]; then
     timeout 35s gio launch /var/lib/snapd/desktop/applications/floatboard_floatboard.desktop >>"$log_file" 2>&1 &
   else
@@ -42,10 +43,16 @@ for launch_mode in desktop terminal; do
     exit 1
   fi
   window_pid=$(xdotool getwindowpid "$window_id")
+  launch_ready_ms=$(date +%s%3N)
+  launch_duration_ms=$((launch_ready_ms - launch_started_ms))
+  if ((launch_duration_ms > 20000)); then
+    echo "FAIL: $launch_mode cold start took ${launch_duration_ms}ms" >&2
+    exit 1
+  fi
   sleep 2
   kill -0 "$window_pid"
   xdotool getwindowname "$window_id"
-  printf 'PASS installed strict Snap: %s launch opens a stable visible window\n' "$launch_mode"
+  printf 'PASS installed strict Snap: %s launch opens a stable visible window in %sms\n' "$launch_mode" "$launch_duration_ms"
   cleanup_app
   for ((attempt = 0; attempt < 20; attempt++)); do
     if ! xdotool getwindowname "$window_id" >/dev/null 2>&1; then break; fi

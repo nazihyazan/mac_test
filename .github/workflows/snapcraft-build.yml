@@ -1,0 +1,67 @@
+name: Snapcraft Build
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - snapcraft.yaml
+      - snap/**
+      - package.json
+      - package-lock.json
+      - main.js
+      - preload.js
+      - renderer.js
+      - index.html
+      - styles.css
+      - build/**
+      - scripts/smoke-installed-snap.sh
+      - .github/workflows/snapcraft-build.yml
+  pull_request:
+    paths:
+      - snapcraft.yaml
+      - snap/**
+      - package.json
+      - package-lock.json
+      - main.js
+      - preload.js
+      - renderer.js
+      - index.html
+      - styles.css
+      - build/**
+      - scripts/smoke-installed-snap.sh
+      - .github/workflows/snapcraft-build.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and launch the strict snap
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Build with Snapcraft
+        id: snapcraft
+        uses: snapcore/action-build@v1
+
+      - name: Install launch-test tools
+        run: sudo apt-get update && sudo apt-get install -y xvfb xdotool
+
+      - name: Install and launch the built snap
+        env:
+          SNAP_FILE: ${{ steps.snapcraft.outputs.snap }}
+        run: |
+          sudo snap install --dangerous "$SNAP_FILE"
+          xvfb-run -a bash scripts/smoke-installed-snap.sh
+
+      - name: Upload tested snap
+        uses: actions/upload-artifact@v4
+        with:
+          name: floatboard-snapcraft-amd64
+          path: ${{ steps.snapcraft.outputs.snap }}
+          if-no-files-found: error

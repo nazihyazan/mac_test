@@ -13,6 +13,8 @@ async function smokeTest({ executablePath, snap = false } = {}) {
   let app;
 
   async function launch() {
+    const startupBegan = performance.now();
+    const startupStep = label => console.log(`Startup ${label}: ${Math.round(performance.now() - startupBegan)} ms`);
     const env = { ...process.env, XDG_CONFIG_HOME: path.join(profile, 'config') };
     delete env.ELECTRON_RUN_AS_NODE;
     if (snap) env.SNAP = path.dirname(executablePath);
@@ -26,13 +28,19 @@ async function smokeTest({ executablePath, snap = false } = {}) {
       env,
       timeout: 20000
     });
+    startupStep('process launched');
     app.process().stderr.on('data', chunk => logs.push(chunk.toString()));
     const page = await app.firstWindow({ timeout: 15000 });
+    startupStep('first window');
     page.setDefaultTimeout(10000);
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.waitForFunction(() => window.floatingBoard && document.querySelector('#board'));
+    startupStep('renderer ready');
     await page.waitForFunction(async () => (await window.floatingBoard.getWindowState()).visible);
+    const startupMs = Math.round(performance.now() - startupBegan);
+    assert.ok(startupMs < 15000, `Cold start took ${startupMs} ms`);
+    console.log(`Startup ready in ${startupMs} ms`);
     assert.equal(await app.evaluate(({ app }) => app.getPath('userData')), profile);
     const onScreen = await app.evaluate(({ BrowserWindow, screen }) => {
       const bounds = BrowserWindow.getAllWindows()[0].getBounds();
