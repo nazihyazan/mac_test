@@ -24,10 +24,15 @@ cleanup() {
 }
 trap cleanup EXIT
 
+desktop_file=/var/lib/snapd/desktop/applications/floatboard_floatboard.desktop
+expected_icon=/snap/floatboard/current/usr/share/icons/hicolor/512x512/apps/floatboard.png
+grep -Fx "Icon=$expected_icon" "$desktop_file"
+test -f "$expected_icon"
+
 for launch_mode in desktop terminal; do
   launch_started_ms=$(date +%s%3N)
   if [[ "$launch_mode" == desktop ]]; then
-    timeout 35s gio launch /var/lib/snapd/desktop/applications/floatboard_floatboard.desktop >>"$log_file" 2>&1 &
+    timeout 35s gio launch "$desktop_file" >>"$log_file" 2>&1 &
   else
     timeout 35s snap run floatboard >>"$log_file" 2>&1 &
   fi

@@ -4,6 +4,6 @@ Comment=Floating notes and clipboard manager
 Exec=floatboard %U
 Terminal=false
 Type=Application
-Icon=floatboard
+Icon=${SNAP}/usr/share/icons/hicolor/512x512/apps/floatboard.png
 StartupWMClass=FloatBoard
 Categories=Utility;
