@@ -25,9 +25,11 @@ cleanup() {
 trap cleanup EXIT
 
 desktop_file=/var/lib/snapd/desktop/applications/floatboard_floatboard.desktop
-expected_icon=/snap/floatboard/current/usr/share/icons/hicolor/512x512/apps/floatboard.png
-grep -Fx "Icon=$expected_icon" "$desktop_file"
-test -f "$expected_icon"
+if [[ "${EXPECT_SNAPCRAFT_ICON_PATH:-0}" == 1 ]]; then
+  expected_icon=/snap/floatboard/current/usr/share/icons/hicolor/512x512/apps/floatboard.png
+  grep -Fx "Icon=$expected_icon" "$desktop_file"
+  test -f "$expected_icon"
+fi
 
 for launch_mode in desktop terminal; do
   launch_started_ms=$(date +%s%3N)

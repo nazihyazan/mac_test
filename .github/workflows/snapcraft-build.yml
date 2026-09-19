@@ -55,6 +55,7 @@ jobs:
       - name: Install and launch the built snap
         env:
           SNAP_FILE: ${{ steps.snapcraft.outputs.snap }}
+          EXPECT_SNAPCRAFT_ICON_PATH: 1
         run: |
           sudo snap install --dangerous "$SNAP_FILE"
           xvfb-run -a bash scripts/smoke-installed-snap.sh
