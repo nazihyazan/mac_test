@@ -1,0 +1,53 @@
+name: floatboard
+title: FloatBoard
+version: '1.0.17'
+summary: Floating notes and clipboard manager
+description: |
+  FloatBoard keeps notes, copied text, images and videos in a compact floating
+  window. It supports clipboard history, literal text pasting, persistent cards,
+  image previews, dark mode and an always-on-top workspace.
+
+base: core22
+grade: stable
+confinement: strict
+license: MIT
+
+platforms:
+  amd64:
+
+apps:
+  floatboard:
+    command: usr/lib/floatboard/floatboard --no-sandbox --disable-dev-shm-usage
+    desktop: usr/share/applications/floatboard.desktop
+    extensions:
+      - gnome
+    plugs:
+      - audio-playback
+      - browser-support
+      - home
+      - network
+
+parts:
+  floatboard:
+    plugin: nil
+    source: .
+    build-snaps:
+      - node/22/stable
+    override-build: |
+      npm ci --no-audit --no-fund
+      npx electron-builder --linux dir --publish never \
+        -c.directories.output=dist/snapcraft
+
+      install -d "$CRAFT_PART_INSTALL/usr/lib/floatboard"
+      cp -a dist/snapcraft/linux-unpacked/. \
+        "$CRAFT_PART_INSTALL/usr/lib/floatboard/"
+
+      install -Dm644 snap/gui/floatboard.desktop \
+        "$CRAFT_PART_INSTALL/usr/share/applications/floatboard.desktop"
+      install -Dm644 build/icon.png \
+        "$CRAFT_PART_INSTALL/usr/share/icons/hicolor/512x512/apps/floatboard.png"
+
+    prime:
+      - usr/lib/floatboard
+      - usr/share/applications/floatboard.desktop
+      - usr/share/icons/hicolor/512x512/apps/floatboard.png
