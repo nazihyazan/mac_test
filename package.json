@@ -9,6 +9,7 @@
     "build:linux": "electron-builder --linux --publish never -c.directories.output=dist/linux",
     "build:snap": "electron-builder --linux snap --publish never -c.directories.output=dist/linux",
     "build:win": "electron-builder --win nsis --x64 --publish never -c.directories.output=dist/windows",
+    "build:store": "electron-builder --win appx --x64 --publish never -c.directories.output=dist/windows-store",
     "test:win": "node scripts/windows-health-smoke.cjs",
     "test": "node --test test/*.test.cjs",
     "test:smoke": "node scripts/smoke-test.cjs",
@@ -60,6 +61,14 @@
       "target": "nsis",
       "icon": "assets/icon.ico",
       "artifactName": "FloatBoard-${version}-windows-${arch}.${ext}"
+    },
+    "appx": {
+      "identityName": "FloatingToolsStudio.FloatBoard",
+      "applicationId": "FloatBoard",
+      "publisher": "CN=A59290A1-B053-4A32-B868-B3EC2BD33ABF",
+      "publisherDisplayName": "Floating Tools Studio",
+      "displayName": "FloatBoard",
+      "artifactName": "FloatBoard-${version}-store-${arch}.${ext}"
     },
     "linux": {
       "target": [

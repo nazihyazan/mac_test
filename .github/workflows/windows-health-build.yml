@@ -32,9 +32,33 @@ jobs:
         run: |
           $env:FLOATBOARD_WINDOWS_EXECUTABLE = Join-Path $PWD 'dist/windows/win-unpacked/FloatBoard.exe'
           npm run test:win
+      - name: Build Microsoft Store package
+        run: npm run build:store
+      - name: Verify Store package identity and version
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression
+          $archive = [System.IO.Compression.ZipFile]::OpenRead((Join-Path $PWD 'dist/windows-store/FloatBoard-1.0.18-store-x64.appx'))
+          try {
+            $entry = $archive.GetEntry('AppxManifest.xml')
+            if (-not $entry) { throw 'AppxManifest.xml is missing' }
+            $reader = [System.IO.StreamReader]::new($entry.Open())
+            try { [xml]$manifest = $reader.ReadToEnd() } finally { $reader.Dispose() }
+            $identity = $manifest.Package.Identity
+            if ($identity.Name -ne 'FloatingToolsStudio.FloatBoard') { throw "Wrong package name: $($identity.Name)" }
+            if ($identity.Publisher -ne 'CN=A59290A1-B053-4A32-B868-B3EC2BD33ABF') { throw "Wrong publisher: $($identity.Publisher)" }
+            if ($identity.Version -ne '1.0.18.0') { throw "Wrong package version: $($identity.Version)" }
+            Write-Host "Verified Store identity $($identity.Name), version $($identity.Version)"
+          } finally { $archive.Dispose() }
       - name: Upload tested Windows installer
         uses: actions/upload-artifact@v4
         with:
           name: floatboard-1.0.18-windows-installer
           if-no-files-found: error
           path: dist/windows/FloatBoard-1.0.18-windows-x64.exe
+      - name: Upload Microsoft Store package
+        uses: actions/upload-artifact@v4
+        with:
+          name: floatboard-1.0.18-microsoft-store-appx
+          if-no-files-found: error
+          path: dist/windows-store/FloatBoard-1.0.18-store-x64.appx
