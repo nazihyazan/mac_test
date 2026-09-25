@@ -76,6 +76,10 @@ async function quit(instance) {
     await page.keyboard.press('Control+v');
     const editor = page.locator('.text-card-editor').first();
     await editor.waitFor();
+    await page.evaluate(() => saveNow());
+    if (packaged) {
+      await require('./board-regression.cjs').boardRegression(instance, page);
+    }
     await editor.fill('Last edit must survive immediate quit');
     await quit(instance);
     running = null;
@@ -85,7 +89,7 @@ async function quit(instance) {
       .some(editor => editor.value === 'Last edit must survive immediate quit'));
     await quit(running.instance);
     running = null;
-    console.log(`PASS Windows ${packaged ? 'packaged' : 'source'}: launch, event-driven clipboard, tray, save and quit`);
+    console.log(`PASS Windows ${packaged ? 'packaged with 100-item board' : 'source'}: launch, event-driven clipboard, tray, save and quit`);
   } finally {
     if (running) await running.instance.close().catch(() => {});
     await fs.rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
