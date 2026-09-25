@@ -421,6 +421,7 @@ function queueSave() {
 
 async function saveNow() {
   clearTimeout(saveTimer);
+  saveTimer = null;
 
   try {
     await api.saveBoard(cleanBoardForSave());
@@ -429,6 +430,9 @@ async function saveNow() {
     showToast('Save failed');
   }
 }
+
+// The Windows quit path waits for the last debounced edit to reach disk.
+window.__flushBoardForQuit = saveNow;
 
 function normalizeLoadedBoard(data) {
   const next = { version: 1, sections: [] };

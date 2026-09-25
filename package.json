@@ -1,13 +1,15 @@
 {
   "name": "floatboard",
-  "version": "1.0.17",
-  "description": "A fast and unobtrusive floating clipboard manager for Linux",
+  "version": "1.0.18",
+  "description": "A fast floating clipboard and notes manager",
   "main": "main.js",
   "scripts": {
     "start": "env -u ELECTRON_RUN_AS_NODE electron .",
     "dev": "env -u ELECTRON_RUN_AS_NODE electron .",
     "build:linux": "electron-builder --linux --publish never -c.directories.output=dist/linux",
     "build:snap": "electron-builder --linux snap --publish never -c.directories.output=dist/linux",
+    "build:win": "electron-builder --win nsis --x64 --publish never -c.directories.output=dist/windows",
+    "test:win": "node scripts/windows-health-smoke.cjs",
     "test": "node --test test/*.test.cjs",
     "test:smoke": "node scripts/smoke-test.cjs",
     "test:snap": "node scripts/check-snap.cjs"
@@ -24,6 +26,7 @@
   "type": "commonjs",
   "dependencies": {
     "electron-updater": "^6.1.8",
+    "koffi": "^3.0.0",
     "node-machine-id": "^1.1.12",
     "x11": "4.2.1"
   },
@@ -34,7 +37,7 @@
   },
   "build": {
     "appId": "com.nazih.floatboard",
-    "buildVersion": "1.0.0.0",
+    "buildVersion": "1.0.18.0",
     "productName": "FloatBoard",
     "directories": {
       "output": "dist"
@@ -53,6 +56,11 @@
       "clipboard-watcher.js",
       "media-store.js"
     ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico",
+      "artifactName": "FloatBoard-${version}-windows-${arch}.${ext}"
+    },
     "linux": {
       "target": [
         "AppImage",

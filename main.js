@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Menu, Tray, globalShortcut, ipcMain, nativeImage, protocol, net, shell, clipboard, screen } = require('electron');
 // Snap updates are installed by snapd, not the AppImage updater.
-const autoUpdater = process.env.SNAP ? null : require('electron-updater').autoUpdater;
+// Windows Store owns updates for its packages; the Windows test installer is updated manually.
+const autoUpdater = process.env.SNAP || process.platform === 'win32' ? null : require('electron-updater').autoUpdater;
 const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
@@ -116,6 +117,7 @@ let mainWindow = null;
 let tray = null;
 let saveWindowTimer = null;
 let isQuitting = false;
+let quitDrainStarted = false;
 let restoreAlwaysOnTopAfterMinimize = false;
 
 app.setName(APP_NAME);
@@ -184,6 +186,22 @@ function saveWindowStateSoon() {
       alwaysOnTop: mainWindow.isAlwaysOnTop()
     }).catch((error) => console.error('Failed to save window state:', error));
   }, 250);
+}
+
+function flushWindowState() {
+  clearTimeout(saveWindowTimer);
+  saveWindowTimer = null;
+  if (!mainWindow || mainWindow.isDestroyed()) return Promise.resolve();
+  return writeJsonAtomic(getWindowStatePath(), {
+    ...mainWindow.getBounds(),
+    alwaysOnTop: mainWindow.isAlwaysOnTop()
+  });
+}
+
+function stopClipboardMonitoring() {
+  const stop = stopClipboardWatcher;
+  stopClipboardWatcher = () => {};
+  stop();
 }
 
 function sendWindowStatus() {
@@ -411,7 +429,7 @@ function createWindow() {
   });
 
   mainWindow.on('focus', () => {
-    if (getClipboardWatcherStatus() !== 'xfixes') inspectClipboard();
+    if (!['xfixes', 'windows-message'].includes(getClipboardWatcherStatus())) inspectClipboard();
   });
   mainWindow.on('move', saveWindowStateSoon);
   mainWindow.on('resize', () => {
@@ -445,6 +463,19 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  if (process.platform === 'win32') {
+    // Windows can end a session without waiting for Electron's normal quit path.
+    mainWindow.on('session-end', () => {
+      clearTimeout(saveWindowTimer);
+      if (!mainWindow || mainWindow.isDestroyed()) return;
+      try {
+        fs.writeFileSync(getWindowStatePath(), JSON.stringify({
+          ...mainWindow.getBounds(), alwaysOnTop: mainWindow.isAlwaysOnTop()
+        }));
+      } catch (error) { console.error('Failed to save state at session end:', error); }
+    });
+  }
 }
 
 function normalizeBoardForRenderer(board) {
@@ -897,7 +928,7 @@ app.whenReady().then(() => {
       clipboardBusy = false;
     }
   };
-  stopClipboardWatcher = startClipboardWatcher({ app, onChange: inspectClipboard });
+  stopClipboardWatcher = startClipboardWatcher({ app, window: mainWindow, onChange: inspectClipboard });
 
   const showHistory = () => {
     if (mainWindow) {
@@ -913,13 +944,35 @@ app.whenReady().then(() => {
   app.on('activate', showWindow);
 });
 
-app.on('before-quit', () => {
+app.on('before-quit', (event) => {
   isQuitting = true;
-  saveWindowStateSoon();
+  if (quitDrainStarted) return;
+  if (process.platform !== 'win32') {
+    saveWindowStateSoon();
+    return;
+  }
+  // Stop new clipboard work, then give queued board and window writes a short
+  // opportunity to finish before the process exits. Never hold Windows shutdown indefinitely.
+  event.preventDefault();
+  quitDrainStarted = true;
+  stopClipboardMonitoring();
+  const flushBoard = mainWindow && !mainWindow.isDestroyed()
+    ? mainWindow.webContents.executeJavaScript('window.__flushBoardForQuit && window.__flushBoardForQuit()')
+    : Promise.resolve();
+  const pending = Promise.allSettled([flushBoard, flushWindowState()])
+    .then(() => boardWrites);
+  let deadline;
+  Promise.race([
+    pending,
+    new Promise(resolve => { deadline = setTimeout(resolve, 1500); })
+  ]).finally(() => {
+    clearTimeout(deadline);
+    app.quit();
+  });
 });
 
 app.on('will-quit', () => {
-  stopClipboardWatcher();
+  stopClipboardMonitoring();
   globalShortcut.unregisterAll();
 });
 
