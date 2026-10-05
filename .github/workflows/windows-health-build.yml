@@ -32,6 +32,17 @@ jobs:
         run: |
           $env:FLOATBOARD_WINDOWS_EXECUTABLE = Join-Path $PWD 'dist/windows/win-unpacked/FloatBoard.exe'
           npm run test:win
+      - name: Install and test Windows installer
+        shell: pwsh
+        run: |
+          $installer = Join-Path $PWD 'dist/windows/FloatBoard-1.0.19-windows-x64.exe'
+          $install = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "Installer exited with $($install.ExitCode)" }
+          $installed = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Programs') -Recurse -Filter FloatBoard.exe -File |
+            Select-Object -First 1 -ExpandProperty FullName
+          if (-not $installed) { throw 'FloatBoard.exe was not found after installation' }
+          $env:FLOATBOARD_WINDOWS_EXECUTABLE = $installed
+          npm run test:win
       - name: Build Microsoft Store package
         run: npm run build:store
       - name: Verify Store package identity and version
