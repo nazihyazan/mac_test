@@ -2,9 +2,11 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { createReadStream, constants } = require('node:fs');
+const { detectBitmapLayout, encodeBitmapPng } = require('./png-encode');
 
 function createMediaStore({ directory, nativeImage }) {
   let imageWrites = Promise.resolve();
+  let bitmapLayout;
   const preparedFiles = new Map();
   const mediaUrl = name => `app-media://media/${encodeURIComponent(name)}`;
   async function writeOnce(name, buffer) {
@@ -23,11 +25,18 @@ function createMediaStore({ directory, nativeImage }) {
     const image = Buffer.isBuffer(input) ? nativeImage.createFromBuffer(input) : input;
     if (image.isEmpty()) throw new Error('Image could not be decoded.');
     const { width, height } = image.getSize();
-    const contentHash = crypto.createHash('sha256').update(`${width}x${height}:`).update(image.toBitmap()).digest('hex');
+    const bitmap = image.toBitmap();
+    const contentHash = crypto.createHash('sha256').update(`${width}x${height}:`).update(bitmap).digest('hex');
     const fileName = `${contentHash}.png`;
     const thumbnail = `${contentHash}-thumb.png`;
     const exists = await fs.access(path.join(directory(), fileName)).then(() => true, () => false);
-    if (!exists) await writeOnce(fileName, image.toPNG());
+    if (!exists) {
+      const png = process.platform === 'win32' && bitmap.length === width * height * 4
+        ? await encodeBitmapPng(bitmap, width, height,
+          bitmapLayout ||= detectBitmapLayout(nativeImage))
+        : image.toPNG();
+      await writeOnce(fileName, png);
+    }
     const thumbnailExists = await fs.access(path.join(directory(), thumbnail)).then(() => true, () => false);
     if (!thumbnailExists) {
       const scale = Math.min(1, 512 / Math.max(width, height));

@@ -55,7 +55,8 @@
       "seo.js",
       "assets/**/*",
       "clipboard-watcher.js",
-      "media-store.js"
+      "media-store.js",
+      "png-encode.js"
     ],
     "win": {
       "target": "nsis",

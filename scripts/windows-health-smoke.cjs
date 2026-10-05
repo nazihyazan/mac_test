@@ -40,6 +40,63 @@ async function quit(instance) {
   assert.equal(await exited, 0);
 }
 
+async function verifyLargeClipboardRemainsResponsive(instance, page) {
+  const halfRed = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DQAAAEgQGALFXOsAAAAABJRU5ErkJggg==';
+  const transparentItem = await page.evaluate(async png => {
+    const bytes = Uint8Array.from(atob(png), character => character.charCodeAt(0));
+    return window.floatingBoard.saveBlob(bytes.buffer);
+  }, halfRed);
+  const transparencyPreserved = await instance.evaluate(({ nativeImage }, { filePath, png }) => {
+    const saved = nativeImage.createFromPath(filePath);
+    const original = nativeImage.createFromBuffer(Buffer.from(png, 'base64'));
+    return saved.toBitmap().equals(original.toBitmap());
+  }, { filePath: path.join(profile, 'media', transparentItem.fileName), png: halfRed });
+  assert.ok(transparencyPreserved, 'Transparent screenshots must preserve their colors and alpha');
+
+  const before = await page.locator('.media-item').count();
+  await instance.evaluate(({ clipboard, nativeImage }) => {
+    const width = 2048, height = 2048;
+    const pixels = Buffer.allocUnsafe(width * height * 4);
+    let seed = 0x12345678;
+    for (let index = 0; index < pixels.length; index += 4) {
+      seed ^= seed << 13;
+      seed ^= seed >>> 17;
+      seed ^= seed << 5;
+      pixels[index] = seed & 255;
+      pixels[index + 1] = (seed >>> 8) & 255;
+      pixels[index + 2] = (seed >>> 16) & 255;
+      pixels[index + 3] = 255;
+    }
+    const image = nativeImage.createFromBitmap(pixels, { width, height });
+    global.__largeClipboardBitmap = image.toBitmap();
+    clipboard.writeImage(image);
+    global.__maxClipboardLag = 0;
+    let lastTick = Date.now();
+    global.__clipboardLagTimer = setInterval(() => {
+      const now = Date.now();
+      global.__maxClipboardLag = Math.max(global.__maxClipboardLag, now - lastTick - 25);
+      lastTick = now;
+    }, 25);
+  });
+  await page.waitForFunction(count => document.querySelectorAll('.media-item').length > count,
+    before, { timeout: 20000 });
+  await page.evaluate(() => saveNow());
+  const fileName = await page.evaluate(async () => {
+    const board = await window.floatingBoard.loadBoard();
+    return board.sections.find(section => section.type === 'image').items.at(-1).fileName;
+  });
+  const result = await instance.evaluate(({ nativeImage }, filePath) => {
+    clearInterval(global.__clipboardLagTimer);
+    const saved = nativeImage.createFromPath(filePath);
+    const result = { lag: global.__maxClipboardLag,
+      pixelsMatch: saved.toBitmap().equals(global.__largeClipboardBitmap) };
+    global.__largeClipboardBitmap = null;
+    return result;
+  }, path.join(profile, 'media', fileName));
+  assert.ok(result.lag < 800, `Large clipboard image blocked the main loop for ${result.lag} ms`);
+  assert.ok(result.pixelsMatch, 'Stored screenshot must preserve its original pixels');
+}
+
 (async () => {
   let running;
   try {
@@ -80,6 +137,7 @@ async function quit(instance) {
     if (packaged) {
       await require('./board-regression.cjs').boardRegression(instance, page);
     }
+    await verifyLargeClipboardRemainsResponsive(instance, page);
     await editor.fill('Last edit must survive immediate quit');
     await quit(instance);
     running = null;
