@@ -1,6 +1,6 @@
 {
   "name": "floatboard",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "A fast floating clipboard and notes manager",
   "main": "main.js",
   "scripts": {
@@ -38,7 +38,7 @@
   },
   "build": {
     "appId": "com.nazih.floatboard",
-    "buildVersion": "1.0.18.0",
+    "buildVersion": "1.0.19.0",
     "productName": "FloatBoard",
     "directories": {
       "output": "dist"
