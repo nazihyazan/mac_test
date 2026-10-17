@@ -36,77 +36,38 @@ const crypto = require('crypto');
 const { isPremium, activateLicense } = require('./license.js');
 const { machineIdSync } = require('node-machine-id');
 
-async function verifyWithKeygen(email, key) {
+async function verifyWithLemonSqueezy(email, key) {
   try {
-    const fingerprint = machineIdSync(true); // true to return original string
-
-    // Dynamic import to use node fetch
-    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-    // Or simpler, in electron main process we can use net.fetch which is built-in since Electron 21
+    const fingerprint = machineIdSync(true);
     const { net } = require('electron');
 
-    const response = await net.fetch('https://api.keygen.sh/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/licenses/actions/validate-key', {
+    const params = new URLSearchParams();
+    params.append('license_key', key.trim());
+    params.append('instance_name', fingerprint || require('os').hostname() || 'FloatBoard-User');
+
+    const response = await net.fetch('https://api.lemonsqueezy.com/v1/licenses/activate', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/vnd.api+json',
-        'Accept': 'application/vnd.api+json'
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
       },
-      body: JSON.stringify({
-        meta: {
-          key: key.trim(),
-          scope: {
-            fingerprint: fingerprint
-          }
-        }
-      })
+      body: params.toString()
     });
-    
+
     const data = await response.json();
-    console.log('Keygen Validate Response:', JSON.stringify(data, null, 2));
-    
-    if (data.meta && data.meta.valid) {
+    console.log('Lemon Squeezy Activate Response:', JSON.stringify(data, null, 2));
+
+    if (data.activated === true) {
       return true;
     }
-    
-    // If the key is valid but this specific machine hasn't been registered yet
-    if (data.meta && (data.meta.code === 'NO_MACHINES' || data.meta.code === 'NO_MACHINE')) {
-      console.log('Machine not registered. Attempting to register machine...');
-      
-      const activateResponse = await net.fetch('https://api.keygen.sh/v1/accounts/dcc57dd7-bfd1-4469-a4f4-7c8545660f76/machines', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/vnd.api+json',
-          'Accept': 'application/vnd.api+json',
-          'Authorization': `License ${key.trim()}`
-        },
-        body: JSON.stringify({
-          data: {
-            type: 'machines',
-            attributes: {
-              fingerprint: fingerprint,
-              name: require('os').hostname() || 'FloatBoard User PC'
-            },
-            relationships: {
-              license: {
-                data: { type: 'licenses', id: data.data.id }
-              }
-            }
-          }
-        })
-      });
-      
-      const activateData = await activateResponse.json();
-      console.log('Keygen Machine Registration Response:', JSON.stringify(activateData, null, 2));
-      
-      if (activateData.data && activateData.data.id) {
-        // Machine registered successfully!
-        return true;
-      }
+
+    if (data.error && (data.error.includes('already activated') || data.error.includes('already been activated'))) {
+      return true;
     }
-    
+
     return false;
   } catch (error) {
-    console.error('Keygen validation error:', error);
+    console.error('Lemon Squeezy validation error:', error);
     return false;
   }
 }
@@ -675,7 +636,7 @@ ipcMain.handle('license:is-premium', () => {
 });
 
 ipcMain.handle('license:activate', async (_event, email, key) => {
-  const isValid = await verifyWithKeygen(email, key);
+  const isValid = await verifyWithLemonSqueezy(email, key);
   if (isValid) {
     return activateLicense(email, key);
   }
