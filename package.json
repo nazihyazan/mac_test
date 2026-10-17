@@ -1,6 +1,6 @@
 {
   "name": "floatboard",
-  "version": "1.0.17",
+  "version": "1.0.20",
   "description": "A fast and unobtrusive floating clipboard manager for Linux",
   "main": "main.js",
   "scripts": {
