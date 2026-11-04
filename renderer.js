@@ -1,3 +1,22 @@
+window.addEventListener('error', (event) => {
+  if (window.floatingBoard && typeof window.floatingBoard.reportError === 'function') {
+    window.floatingBoard.reportError(
+      event.message || 'Renderer Error',
+      event.error ? event.error.stack : `${event.filename}:${event.lineno}:${event.colno}`
+    );
+  }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  if (window.floatingBoard && typeof window.floatingBoard.reportError === 'function') {
+    const reason = event.reason;
+    window.floatingBoard.reportError(
+      (reason && reason.message) || String(reason) || 'Unhandled Promise Rejection',
+      reason && reason.stack ? reason.stack : null
+    );
+  }
+});
+
 const api = window.floatingBoard;
 
 // Instant theme application on load to prevent flashing

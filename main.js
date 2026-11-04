@@ -1,10 +1,55 @@
+const { app, BrowserWindow, Menu, Tray, globalShortcut, ipcMain, nativeImage, protocol, net, shell, clipboard, screen } = require('electron');
 const Sentry = require('@sentry/electron/main');
+
+const isWindowsStore = Boolean(process.windowsStore || process.env.APPX_PACKAGE_NAME);
+const appEnvironment = isWindowsStore
+  ? 'windows-store'
+  : (app.isPackaged ? 'production' : 'development');
 
 Sentry.init({
   dsn: "https://1188a5356aa747a01852c614915afffa@o4512370665717760.ingest.us.sentry.io/4512370689835008",
+  release: "floatboard@1.0.20",
+  environment: appEnvironment,
+  initialScope: {
+    tags: {
+      platform: process.platform,
+      arch: process.arch,
+      windowsStore: String(isWindowsStore),
+    }
+  }
 });
 
-const { app, BrowserWindow, Menu, Tray, globalShortcut, ipcMain, nativeImage, protocol, net, shell, clipboard, screen } = require('electron');
+// Capture renderer process crashes (OOM, GPU crash, killed)
+app.on('render-process-gone', (_event, _webContents, details) => {
+  const message = `Renderer process gone: ${details.reason} (exitCode: ${details.exitCode})`;
+  console.error(message);
+  Sentry.captureMessage(message, {
+    level: 'fatal',
+    extra: { details }
+  });
+});
+
+// Capture unexpected child process crashes
+app.on('child-process-gone', (_event, details) => {
+  if (details.reason !== 'clean-exit') {
+    const message = `Child process gone: ${details.type} (${details.reason}, exitCode: ${details.exitCode})`;
+    console.warn(message);
+    Sentry.captureMessage(message, {
+      level: 'error',
+      extra: { details }
+    });
+  }
+});
+
+// Receive unhandled errors reported from renderer UI
+ipcMain.on('sentry:capture-error', (_event, data) => {
+  Sentry.captureMessage(data.message || 'Renderer Error', {
+    level: 'error',
+    extra: data,
+    tags: { source: 'renderer' }
+  });
+});
+
 // Snap updates are installed by snapd, not the AppImage updater.
 // Windows Store owns updates for its packages; the Windows test installer is updated manually.
 const autoUpdater = process.env.SNAP || process.platform === 'win32' ? null : require('electron-updater').autoUpdater;
@@ -330,6 +375,10 @@ function createWindow() {
 
   mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
+
+  mainWindow.webContents.on('unresponsive', () => {
+    Sentry.captureMessage('Main window became unresponsive', { level: 'warning' });
+  });
 
   mainWindow.once('ready-to-show', () => {
     showWindow();

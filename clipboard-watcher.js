@@ -38,8 +38,12 @@ function startClipboardWatcher({ onChange, onError = console.warn, window }) {
         stopped = true;
         mode = 'stopped';
         clearTimeout(timer);
-        if (!window.isDestroyed()) window.unhookWindowMessage(WM_CLIPBOARDUPDATE);
-        removeListener(hwnd);
+        try {
+          if (!window.isDestroyed()) window.unhookWindowMessage(WM_CLIPBOARDUPDATE);
+        } catch (_) {}
+        try {
+          if (registered && typeof removeListener === 'function') removeListener(hwnd);
+        } catch (_) {}
       };
       window.once('closed', stop);
       return stop;

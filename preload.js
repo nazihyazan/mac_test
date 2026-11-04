@@ -1,4 +1,3 @@
-require('@sentry/electron/preload');
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 function subscribe(channel, callback) {
@@ -40,6 +39,7 @@ contextBridge.exposeInMainWorld('floatingBoard', {
   checkDailyLimit: (kind) => ipcRenderer.invoke('license:check-daily-limit', kind),
   getDailyUsage: () => ipcRenderer.invoke('license:get-daily-usage'),
   openExternal: (url) => ipcRenderer.send('open-external', url),
+  reportError: (message, stack) => ipcRenderer.send('sentry:capture-error', { message, stack }),
 
   getFilePath: (file) => {
     try {
