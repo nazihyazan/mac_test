@@ -1,3 +1,4 @@
+require('@sentry/electron/preload');
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 function subscribe(channel, callback) {

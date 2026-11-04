@@ -1,3 +1,9 @@
+const Sentry = require('@sentry/electron/main');
+
+Sentry.init({
+  dsn: "https://1188a5356aa747a01852c614915afffa@o4512370665717760.ingest.us.sentry.io/4512370689835008",
+});
+
 const { app, BrowserWindow, Menu, Tray, globalShortcut, ipcMain, nativeImage, protocol, net, shell, clipboard, screen } = require('electron');
 // Snap updates are installed by snapd, not the AppImage updater.
 // Windows Store owns updates for its packages; the Windows test installer is updated manually.
